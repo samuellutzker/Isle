@@ -38,7 +38,7 @@ class Interface {
 
     dlgAbout() {
         const html = `<h1>Thanks for stopping by!</h1>
-            <p>This implementation of the base game of Catan by Klaus Teuber was programmed by Sam Lutzker in 2023/24, 
+            <p>This implementation of the base game and Seafarers extension of Catan by Klaus Teuber was programmed by Sam Lutzker in 2023/24, 
             for private, non-commercial use only.</p>
             <p>To view the rules, or a short overview of building prices click the options below.</p>`;
 
