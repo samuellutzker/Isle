@@ -28,39 +28,59 @@
         <script type="text/javascript"> 
 
         const DEBUG_AUTH = "<?php echo $_GET['debug'] ?? ""; ?>";
-        const LOCAL_WS = true;
+        const LOCAL_WS = false;
 
-        const WSS_URL = LOCAL_WS ? "ws://localhost:8080" : "wss://lutzker.ddns.net:8765";
-
-        var main;
-
-        const imgPreload = () => {
-            imgPreload.cache = [];
-
-            <?php
-            function search_images($dir) {
-                $images = [];
+        <?php
+            function folder_walk($dir, ...$extensions) {
+                $files = [];
                 if ($handle = opendir($dir)) {
                     while (false !== ($entry = readdir($handle))) {
                         if ($entry != "." && $entry != "..") {
                             $path = $dir."/".$entry;
                             if (is_dir($path)) {
-                                $images = array_merge($images, search_images($path));
+                                $files = array_merge($files, folder_walk($path));
                             } else {
                                 $parts = explode('.', $entry);
-                                if (in_array($parts[sizeof($parts)-1], ['jpg', 'jpeg', 'png'])) {
-                                    $images[] = $path;
+                                if (in_array($parts[sizeof($parts)-1], $extensions)) {
+                                    $files[] = $path;
                                 }
                             }
                         }
                     }
                     closedir($handle);
                 }   
-                return $images;
+                return $files;
             }
 
-            echo "var fnames = " . json_encode(search_images('images')) . ";";
-            ?>
+            function get_file_roots($base_dir, $extension) {
+              $files = [];
+                if ($handle = opendir($base_dir)) {
+                    while (false !== ($entry = readdir($handle))) {
+                        if ($entry != "." && $entry != "..") {
+                            $parts = explode('.', $entry);
+                            if (array_pop($parts) == $extension) {
+                                $files[] = implode('.', $parts);
+                            }
+                        }
+                    }
+                    closedir($handle);
+                }   
+                return $files;  
+            }
+
+            function is_proper(...$vars) {
+                foreach ($vars as $var)
+                    if (preg_match('/[^a-z_\-0-9]/i', $var))
+                        return false;
+
+                return true;
+            }
+        ?>
+
+        var main;
+
+        const imgPreload = (fnames) => {
+            imgPreload.cache = [];
 
             return new Promise((resolve, reject) => {
                 fnames.forEach((f) => {
@@ -78,34 +98,14 @@
         }
 
         const startup = async () => {
-            <?php
-                $scenarios = array();
-                $handle = opendir('scenarios/');
-                while (false !== ($entry = readdir($handle))) {
-                    $parts = explode('.', $entry);
-                    if ($parts[sizeof($parts)-1] == 'json') {
-                        array_pop($parts);
-                        $scenarios[] = implode('.', $parts);
-                    }
-                }
-                closedir($handle);
+            const WSS_URL = LOCAL_WS ? "ws://localhost:8080" : "wss://lutzker.ddns.net:8765";
 
-                echo "const scenarios = " . json_encode($scenarios) . ";\n";
-            ?>
-
-            Siedler.preload();
-            await imgPreload('images');
+            const scenarios = <?php echo json_encode(get_file_roots('scenarios', 'json')); ?>;
+            Siedler.audioPreload(<?php echo json_encode(get_file_roots('sounds', 'mp3')); ?>);
+            await imgPreload(<?php echo json_encode(folder_walk('images', 'jpg', 'jpeg', 'png')); ?>);
             await Server.connect(WSS_URL);
 
             <?php
-                function is_proper(...$vars) {
-                    foreach ($vars as $var)
-                        if (preg_match('/[^a-z_\-0-9]/i', $var))
-                            return false;
-
-                    return true;
-                }
-
                 if (isset($_GET['user'], $_GET['room'], $_GET['key']) && is_proper($_GET['user'], $_GET['room'], $_GET['key']))
                     echo "main = new Interface(scenarios, '{$_GET['user']}', '{$_GET['room']}', '{$_GET['key']}');";
                 else

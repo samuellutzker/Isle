@@ -1,4 +1,5 @@
 import json
+from error import GameError
 
 class Editor:
 	def __init__(self, room):
@@ -13,10 +14,11 @@ class Editor:
 		self.room = room
 		# self._snumbers0 = [5,2,6,3,8,10,9,12,11,4,8,10,9,4,5,6,3,11] # standard setup
 
+	def lookup(self,x,y):
+		return self.board[y][x] if x < self.width and y < self.height and x >= 0 and y >= 0 else None
+
 	def resizeBoard(self, width, height, shift_x, shift_y):
-		def f(x,y):
-			return self.board[y][x] if x < self.width and y < self.height and x >= 0 and y >= 0 else None
-		board = [[f(x-shift_x, y-shift_y) for x in range(width)] for y in range(height)]
+		board = [[self.lookup(x-shift_x, y-shift_y) for x in range(width)] for y in range(height)]
 		self.board = board
 		self.width = width
 		self.height = height
@@ -32,6 +34,21 @@ class Editor:
 		elif action == 'pile' and 'name' in kwargs and 'content' in kwargs:
 			vars(self)[kwargs['name']] = kwargs['content']
 			await self.room.broadcast(at='editor', do='pile', name=kwargs['name'], content=kwargs['content'])
+
+		elif action == 'robber' and 'x' in kwargs and 'y' in kwargs:
+			x, y = kwargs['x'] + self.shift_x, kwargs['y'] + self.shift_y
+			if self.lookup(x,y) is None or type(self.lookup(x,y)) != dict:
+				raise GameError('No terrain here.')
+			figure = 'pirate' if self.board[y][x]['terrain'] == 'water' else 'robber'
+			if figure not in vars(self):
+				vars(self)[figure] = []
+
+			remove = [x,y] in vars(self)[figure]
+			await self.room.broadcast(at='editor', do=figure, x=kwargs['x'], y=kwargs['y'], remove=remove)
+			if remove:
+				vars(self)[figure].remove([x,y])
+			else:
+				vars(self)[figure].append([x,y])
 
 		elif action == 'board' and 'x' in kwargs and 'y' in kwargs and 'hex' in kwargs:
 			x, y = kwargs['x'] + self.shift_x, kwargs['y'] + self.shift_y

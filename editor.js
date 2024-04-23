@@ -11,10 +11,12 @@ class Editor {
 	selected; // Current element as string
 	situation; // Scenario data
 	isRunning;
+	isRobber;
 	shift; // The center of the board
 	pileIdx; // The current pile (1,2,3,4,fixed)
 	available; // Available tiles
 	placed; // Placed tiles
+	dlgSetting;
 
 	static start(scenario) {
 		Server.query({ do: 'new_editor', scenario: scenario });
@@ -31,17 +33,37 @@ class Editor {
 		const $board = $("#siedler_board");
 		this.canvas = $board[0];
 		this.scene = new Scene(this.canvas);
-		this.hex = { terrain: 'water' };
-		this.selected = 'water';
 		this.situation = {};
+		this.waterCursor();
 
+		this.isRobber = false;
 		this.pileIdx = 0;
 		this.available = null;
 		this.placed = {};
+		this.dlgSetting = {};
+	}
+
+	waterCursor() {
+		this.scene.setCursor('hex', false, false);
+		this.scene.setClickables([ 'water' ]);
+		this.hex = { terrain: 'water' };
+		this.selected = 'water';
+		this.isRobber = false;
+	}
+
+	robberCursor() {
+		if (this.isRobber) {
+			this.waterCursor();
+			return;
+		}
+		this.scene.remove('cursor');
+		this.scene.setCursor('robber', true);
+		this.isRobber = true;
 	}
 
 	setHex(hex, x, y, remove) {
-		!remove ? this.scene.placeHex(typeof hex === 'string' ? { terrain: hex } : hex, x, y) : this.scene.remove(['hex','cursor','chip','triangle'], x, y);
+		!remove ? this.scene.placeHex(hex, x, y) : this.scene.remove(['hex','cursor','chip','triangle'], x, y);
+
 		const f = (i) => this.placed[i] = (this.placed[i] ?? 0) + (!remove ? 1 : -1);
 		if (typeof hex === 'string')
 			return f(hex.slice(2));
@@ -61,11 +83,9 @@ class Editor {
 
 			case 'hex' :
 				const placed = this.setHex(obj.hex, obj.x, obj.y);
-				if (this.available !== null && placed >= this.available) {
+				if (!this.robber && this.available !== null && placed >= this.available) {
 					// used up all chips
-					this.scene.setClickables(['water']);
-					this.hex = { terrain: 'water' };
-					this.selected = 'water';
+					this.waterCursor();
 				}
 				break;
 
@@ -81,10 +101,21 @@ class Editor {
 				this.setHex(obj.hex, obj.x, obj.y, true);
 				break;
 
+			case 'robber' :
+			case 'pirate' :
+				obj.remove ? this.scene.remove(obj.do, obj.x, obj.y) : this.scene.placeFigure(obj.do, obj.x, obj.y, true);
+				break;
+
 		}
 	}
 
 	onClick(boardPos, scrPos) {
+		if (this.isRobber) {
+			Server.query({
+				do: 'editor', what: { action: 'robber', ...boardPos }
+			});
+			return;
+		}
 		Server.query({
 			do: 'editor', what: {
 				...boardPos, 
@@ -160,6 +191,7 @@ class Editor {
 		html += '</p>';
 
 		dialog("Select terrain", `<div id='terrain_dlg'>${html}</div>`, { "OK" : () => {
+			// @ OK
 			const hidden = $("#checkbox_terrain_hidden").is(":checked");
 			const init = !$("#checkbox_terrain_init").is(":checked");
 			const reward = $("#checkbox_terrain_reward").is(":checked");
@@ -195,8 +227,8 @@ class Editor {
 
 			} else if (this.selected == 'random') {
 				// Update the pile and make cursor attached.
-				let name = "terrains"+$("#select_pile").val();
-				let content = [];
+				const name = "terrains"+this.pileIdx;
+				const content = [];
 				Siedler.terrains.forEach((x) => 
 					content.push([
 						{ 
@@ -204,42 +236,48 @@ class Editor {
 							hidden: hidden, 
 							init: !hidden & init,
 							reward: reward,
-							_rnumber: !['water','desert'].includes(x) ? `numbers_${name}` : null
+							_rnumber: !['water','desert'].includes(x) ? `numbers${this.pileIdx}` : null
 						}, parseFloat($(`#terrain_${x}`).val())]));
 				Server.query({ do: 'editor', what: { action: 'pile', name: `_e_s${name}`, content: content }});
 				this.hex = `_r${name}`;
 
-				name = "numbers_"+name;
-				content = [];
-				[2,3,4,5,6,8,9,10,11,12].forEach((x) => content.push([x, parseFloat($(`#number_${x}`).val())]));
-				Server.query({ do: 'editor', what: { action: 'pile', name: `_e_s${name}`, content: content }});
-
 			} else if (this.selected == 'delete') {
 				this.hex = null;
 
-			} else if (this.selected != 'desert' && this.selected != 'water') {
+			} 
 
+			if (!['desert','delete','water'].includes(this.selected)) {
 				if ($('#select_pile').val() != 'fixed') {
-					let name = "numbers"+$("#select_pile").val();
-					let content = [];
+					const name = "numbers"+$("#select_pile").val();
+					const content = [];
 					[2,3,4,5,6,8,9,10,11,12].forEach((x) => 
 						content.push([x, parseFloat($(`#number_${x}`).val())]));
 					Server.query({ do: 'editor', what: { action: 'pile', name: `_e_s${name}`, content: content }});
-					this.hex._rnumber = name;
+					if (this.selected != 'random')
+						this.hex._rnumber = name;
 
 				} else {
-					this.hex.number = parseFloat($('#select_fixed_number').val());
+					if (this.selected != 'random')
+						this.hex.number = parseFloat($('#select_fixed_number').val());
 				}
 			}
 			const cursor = this.selected == 'random' ? this.hex : this.selected;
+			this.scene.setCursor('hex', false, false);
 			this.scene.setClickables([ cursor ]); // Cursor
+			this.isRobber = false;
 
-			if (($("#available_tiles").data('available') ?? 1) <= 0) {
-				dialog("Error", "You must increase the amount of number chips or terrain tiles on your pile", null, null, "red");
-				this.selectTerrainBtn();
+			const available = $("#available_tiles").data('available') ?? 1;
+			if (available <= 0) {
+				dialog("Error", "You must increase the amount of number chips or terrain tiles on your pile", null, null, available < 0 ? "red" : null);
+				available < 0 ? this.selectTerrainBtn() : this.waterCursor();
 			}
 
+			// Save current selection
+			$("#terrain_dlg input[type=checkbox], #terrain_dlg select, #terrain_dlg").each((i,e) =>
+				this.dlgSetting[$(e).prop('id')] = { checked: $(e).prop('checked'), val: $(e).val(), className: $(e)[0].className });
+
 		}}, () => {
+			// @ Startup
 			const available = () => {
 				// find available tiles in pile
 				let numberPile = 0, terrainPile = 0, resourcePile = 0;
@@ -250,23 +288,27 @@ class Editor {
 
 				const numberless = parseFloat($("#terrain_water").val()) + parseFloat($("#terrain_desert").val());
 
-				let prefix = null;
+				this.available = null;
+				let prefix;
+
 				if (this.selected == 'random') {
-					this.available = numberPile < terrainPile - numberless ? 0 : terrainPile;
+					this.available = numberPile - (this.placed["numbers"+this.pileIdx] ?? 0) < terrainPile - numberless ? 0 : terrainPile;
 					prefix = "terrains";
 				} else if (this.selected == 'water' && $("#terrain_dlg").hasClass('harbor') && this.pileIdx != 'fixed') {
 					this.available = resourcePile;
 					prefix = "harbors";
 				} else if (!$("#terrain_dlg").hasClass('nonumber') && this.pileIdx != 'fixed') {
-					this.available = numberPile;
+					this.available = numberPile + numberless - (this.placed["terrains"+this.pileIdx] ?? 0);
 					prefix = "numbers";
 				}
 
-				if (prefix) {
-					const diff = this.available - (this.placed[prefix + this.pileIdx] ?? 0);
-					$("#available_tiles").html(`${diff} tiles remaining`).data('available', diff).css('color', diff > 0 ? 'green' : 'red');
+				if (this.available !== null) {
+					const diff = this.available - (this.placed[prefix+this.pileIdx] ?? 0);
+					$("#available_tiles")
+						.html(`${Math.abs(diff)} tiles ${diff < 0 ? 'missing' : 'available'}`)
+						.data('available', diff)
+						.css('color', diff > 0 ? 'green' : (diff < 0 ? 'red' : 'black'));
 				} else {
-					this.available = null;
 					$("#available_tiles").html('').data('available', null);
 				}
 			};
@@ -277,46 +319,29 @@ class Editor {
 
 				// Reset+Load current piles
 				$("#terrain_dlg input[type=number]").val(0);
-				
-				if (this.selected == 'water') {
-					if (`_e_sharbors${this.pileIdx}` in this.situation) {
-						const pile = this.situation[`_e_sharbors${this.pileIdx}`];
-						for (let t in pile) {
-							$(`#resource_${pile[t][0]}`).val(pile[t][1]);
-						}
-					}
 
-				} else if (this.selected == 'random') {
-					if (`_e_snumbers_terrains${this.pileIdx}` in this.situation) {
-						const pile = this.situation[`_e_snumbers_terrains${this.pileIdx}`];
-						for (let n in pile) {
-							$(`#number_${pile[n][0]}`).val(pile[n][1]);
-						}
-					}
-
-					if (`_e_sterrains${this.pileIdx}` in this.situation) {
-						const pile = this.situation[`_e_sterrains${this.pileIdx}`];
-						for (let t in pile) {
-							$(`#terrain_${pile[t][0]['terrain']}`).val(pile[t][1]);
-							// Remember checkboxes
-							$("#checkbox_terrain_hidden").prop('checked', pile[t][0]['hidden'] ? 'checked' : '');
-							$("#checkbox_terrain_init").prop('checked', !pile[t][0]['init'] ? 'checked' : '');
-							$("#checkbox_terrain_reward").prop('checked', pile[t][0]['reward'] ? 'checked' : '');
-
-						}
-					}
-					
-				} else {
-					if (`_e_snumbers${this.pileIdx}` in this.situation) {
-						const pile = this.situation[`_e_snumbers${this.pileIdx}`];
-						for (let n in pile) {
-							$(`#number_${pile[n][0]}`).val(pile[n][1]);
-						}
+				if (`_e_sharbors${this.pileIdx}` in this.situation) {
+					const pile = this.situation[`_e_sharbors${this.pileIdx}`];
+					for (let t in pile) {
+						$(`#resource_${pile[t][0]}`).val(pile[t][1]);
 					}
 				}
 
-				// Show and hide available options
+				if (`_e_sterrains${this.pileIdx}` in this.situation) {
+					const pile = this.situation[`_e_sterrains${this.pileIdx}`];
+					for (let t in pile) {
+						$(`#terrain_${pile[t][0]['terrain']}`).val(pile[t][1]);
+					}
+				}
+				
+				if (`_e_snumbers${this.pileIdx}` in this.situation) {
+					const pile = this.situation[`_e_snumbers${this.pileIdx}`];
+					for (let n in pile) {
+						$(`#number_${pile[n][0]}`).val(pile[n][1]);
+					}
+				}
 
+				// Show and hide available options:
 				$("#select_terrain").val() == "random" ? $("#terrain_dlg").addClass("random") : $("#terrain_dlg").removeClass("random");
 				$("#select_terrain").val() == "water" ? $("#terrain_dlg").addClass("water") : $("#terrain_dlg").removeClass("water");
 				['delete','water'].includes($("#select_terrain").val()) ? $("#terrain_dlg").addClass("nothing") : $("#terrain_dlg").removeClass("nothing");
@@ -330,7 +355,8 @@ class Editor {
 			$("#terrain_dlg input[type=number], #with_harbor").on('change', available);
 
 			// Remember the current selection
-			$(`option[value=${this.selected}]`).prop('selected', 'selected');
+			for (let id in this.dlgSetting)
+				$("#"+id).val(this.dlgSetting[id].val).prop('checked', this.dlgSetting[id].checked)[0].className = this.dlgSetting[id].className;
 
 			refresh();
 
@@ -339,7 +365,12 @@ class Editor {
 
 
 	setupButtons() {
-		const $container = Person.myself.$el.find(".container");
+		Person.myself.$el.find(".container").html("<div class='options'></div>");
+		const $container = Person.myself.$el.find(".options");
+
+		$(`<button title='Robber & Pirate'>&#x1f480;</button>`)
+			.on('click', this.robberCursor.bind(this))
+			.appendTo($container);
 
 		$(`<button title='Select terrain'>&#127796;</button>`)
 			.on('click', this.selectTerrainBtn.bind(this))
@@ -390,8 +421,6 @@ class Editor {
 		await this.scene.start(this.onClick.bind(this));
 
 		this.setupBoard(situation);
-		this.scene.setClickables(['water']);
-		this.scene.setCursor('hex', false, false);
 
 		const render = (now) => {
 			if (!this.isRunning || !this.scene)
@@ -404,6 +433,20 @@ class Editor {
 
 	setupBoard(situation) {
 		this.shift = { x: situation.shift_x, y: situation.shift_y };
+
+		if (situation.robber) {
+			for (let i in situation.robber) {
+				const pos = situation.robber[i];
+				this.scene.placeFigure('robber', Number(pos[0])-situation.shift_x, Number(pos[1])-situation.shift_y, true);
+			}
+		}
+
+		if (situation.pirate) {
+			for (let i in situation.pirate) {
+				const pos = situation.pirate[i];
+				this.scene.placeFigure('pirate', Number(pos[0])-situation.shift_x, Number(pos[1])-situation.shift_y, true);
+			}
+		}
 
 		for (let y in situation.board)
 			for (let x in situation.board[y]) {

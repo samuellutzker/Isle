@@ -10,8 +10,7 @@ class Siedler {
 	static sounds = {};
 	static playSounds = true;
 
-	static preload() {
-		const audioFiles = [ 'village', 'city', 'road', 'robber', 'use_card', 'dice', 'win', 'ping' ];
+	static audioPreload(audioFiles) {
 		audioFiles.forEach((f) => this.sounds[f] = new Audio(`sounds/${f}.mp3`));
 	}
 
@@ -177,7 +176,9 @@ class Siedler {
 				break;
 
 			case 'buy_card' :
-				// somebody bought a card
+				this.players[obj.id].$el
+					.find(".banner")
+					.append("<div class='popup'><div class='icon cards' style='color: green'>+1</div></div>");
 				break;
 
 			case 'info' :
@@ -190,7 +191,8 @@ class Siedler {
 
 			case 'pirate' :
 			case 'robber' :
-				this.scene.placeRobber(obj.x, obj.y, obj.do);
+				this.scene.remove(obj.do);
+				this.scene.placeFigure(obj.do, obj.x, obj.y);
 				break;
 
 			case 'leave' :
@@ -232,9 +234,9 @@ class Siedler {
 					this.scene.place(situation.edges[y][x].structure, x, y, situation.edges[y][x].color);
 
 		if (situation.robber)
-			this.scene.placeRobber(situation.robber[0], situation.robber[1], 'robber');
+			this.scene.placeFigure('robber', situation.robber[0], situation.robber[1]);
 		if (situation.pirate)
-			this.scene.placeRobber(situation.pirate[0], situation.pirate[1], 'pirate');
+			this.scene.placeFigure('pirate', situation.pirate[0], situation.pirate[1]);
 	}
 
 	async run(situation) {

@@ -426,15 +426,22 @@ class Scene {
 		this.flashlight = new Light(gl, [0.0,0.0,0.0],[0.9,0.9,0.9], [0.9,0.9,0.9], 3.0, 0.02, 0.0096, Math.cos(12.5*Math.PI/180.0));
 	}
 
-	placeRobber(x, y, figure) {
+	placeFigure(figure, x, y, isEditor) {
 		const c = this.centerToWorld(x, y);
 		const pirateTransform = mat4.fromScaling(mat4.create(), [2,2,2]);
-		mat4.rotateZ(pirateTransform, pirateTransform, 2*Math.PI / 3);
-		this.remove(figure);
-		this.addObject(figure, c.x, c.y, 0, 'black', [0.75, 0.0], figure == 'pirate' ? pirateTransform : null);
+		mat4.rotateZ(pirateTransform, pirateTransform, 2 * Math.PI / 3);
+		this.addObject(figure, c.x, c.y, 0, 'black', [0.75, 0.0], figure == 'pirate' ? pirateTransform : null, isEditor ? x : null, isEditor ? y : null);
 	}
 
 	placeHex(place, x, y, color, colorSat) {
+		// Editor stuff:
+		place = typeof place === 'string' ? { terrain: place } : place;
+		if ('_rnumber' in place)
+			place.number = place._rnumber;
+		if ('harbor' in place && '_rtype' in place.harbor)
+			place.harbor.type = place.harbor._rtype.replace('harbors','numbers');
+		// End
+
 		const normalize = (arr) => arr.map((v) => v / 255.0);
 		const oceanColor = normalize([165,217,242,128]);
 		const c = this.centerToWorld(x, y);
@@ -674,7 +681,7 @@ class Scene {
 			const fname = 'images/numbers/'+i+'.png';
 			this.models['chip_'+i] = Model.clone(gl, this.models['chip_2'], fname, fname, 0.33);
 		}
-		Siedler.resources.concat(['generic']).forEach(
+		Siedler.resources.concat(['generic','numbers1','numbers2','numbers3','numbers4']).forEach(
 			(res) => this.models['chip_'+res] = Model.clone(gl, this.models['chip_2'], `images/resources/${res}.png`, `images/resources/${res}.png`, 0.33)
 		);
 

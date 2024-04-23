@@ -169,5 +169,5 @@ const message = (persistant, msg) => {
 	return old;
 }
 
-const capital = (a) => a.charAt(0).toUpperCase() + a.slice(1);
+const capital = (a) => a.charAt(0).toUpperCase() + a.slice(1).toLowerCase();
 

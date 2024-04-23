@@ -3,6 +3,7 @@ import json
 import hashlib
 import hmac
 import random
+from error import GameError
 
 # roadmap:
 # X scenario editor
@@ -16,12 +17,6 @@ def strip_func(a):
 
 def combine(a, b): # combine (+) contents of two dicts
 	return { k: a.get(k, 0) + b.get(k, 0) for k in set(a) | set(b) }
-
-
-class GameError(Exception):
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
 
 
 class Siedler:
@@ -331,7 +326,7 @@ class Siedler:
 
 		self.board = scenario['board']
 
-		# find islands for 2VP reward ("colonies") via dfs
+		# find islands for VP reward ("colonies") via dfs
 		colonies = 0
 		def dfs_reward(x,y,idx):
 			if self.board[y][x] is None or self.board[y][x]['terrain'] == 'water': return
@@ -368,7 +363,6 @@ class Siedler:
 			return len([ 1 for hx,hy in self.hex_adj_hexes(x,y) if n(hx,hy) in [6,8]]) == 0 and not self.board[y][x]['terrain'] == 'river'
 
 		options = { (x,y) for y in range(self.height) for x in range(self.width) if n(x,y) not in [None,6,8] and is_option(x,y) }
-		# options -= { (x,y) for x,y in options if self.board[y][x] is not None and self.board[y][x]['terrain'] in ['water','desert'] }
 		problems = [ (x,y) for y in range(self.height) for x in range(self.width) if n(x,y) in [6,8] and not is_option(x,y) ]
 		random.shuffle(problems)
 

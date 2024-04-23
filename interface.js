@@ -77,14 +77,14 @@ class Interface {
     btnGame() {
         const start = () => {
             let html = "<h1>Play or edit one of the following scenarios:</h1><select id='dlg_load_scenario'>";
-            this.#scenarios.forEach((s) => html += `<option value='${s}'>${s}</option>`);
+            this.#scenarios.forEach((s) => html += `<option value='${s}'>${capital(s)}</option>`);
             html += '</select>';
 
             dialog("Start Game", html, {
                 "Play" : () => Siedler.start($("#dlg_load_scenario").val()),
                 "Edit" : () => {
                     const scenario = $("#dlg_load_scenario").val();
-                    dialog("Editor", `Do you want to open or delete ${scenario}, or create a new scenario?`, {
+                    dialog("Editor", `Do you want to open or delete ${capital(scenario)}, or create a new scenario?`, {
                         "Open" : () => Editor.start(scenario),
                         "Delete" : () => {
                             dialog("Editor", `Are you sure?`, { "Yes" : () => Editor.delete(scenario), "No" : null });
