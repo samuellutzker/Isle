@@ -328,7 +328,7 @@ class Siedler {
 		this.running = false;
 		$("#siedler_board").remove();
 		$("body").removeClass("playing");
-		message(false);
+		message(false, '');
 	}
 
 	// Different dialogs:

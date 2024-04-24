@@ -28,7 +28,7 @@
         <script type="text/javascript"> 
 
         const DEBUG_AUTH = "<?php echo $_GET['debug'] ?? ""; ?>";
-        const LOCAL_WS = false;
+        const LOCAL_WS = true;
 
         <?php
             function folder_walk($dir, ...$extensions) {

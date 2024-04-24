@@ -158,12 +158,13 @@ const message = (persistant, msg) => {
 	if (!old.persistant) {
 		clearTimeout($("#message").data('timeout'));
 	}
-	$("#message").removeClass('active inactive').data('timeout', null);
+
+	$("#message").removeClass('active inactive').data('timeout', null).html(msg);
 
 	// Show message
 	if(msg) {
 		const timeout = persistant ? null : setTimeout(() => $("#message.active").removeClass("active").addClass("inactive"), msgTimeout);
-		$("#message").html(msg).addClass('active').data('timeout', timeout);
+		$("#message").addClass('active').data('timeout', timeout);
 	}
 
 	return old;

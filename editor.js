@@ -1,7 +1,8 @@
 'use strict';
 
 // Next:
-// Show pile id on chip
+// Problem with robber position after resizeboard
+// 
 // Set author, text
 
 class Editor {
@@ -29,7 +30,6 @@ class Editor {
 	constructor() {
 		$("body").addClass("playing");
 		$("<canvas id='siedler_board'></canvas>").prependTo("#main");
-		message();
 		const $board = $("#siedler_board");
 		this.canvas = $board[0];
 		this.scene = new Scene(this.canvas);
@@ -130,7 +130,7 @@ class Editor {
 		const resources = Siedler.resources.concat([ 'generic' ]);
 
 		let html = `<p><label for='select_terrain'>Pick a terrain</label>
-			<select id='select_terrain'>`;
+			<select id='select_terrain' onchange="if ($('#select_pile').val() == 'fixed') $('#select_pile').val('1');">`;
 		Siedler.terrains.concat([ 'random', 'delete' ]).forEach((res) => html += `<option value='${res}'>${capital(res)}</option>`);
 		html += '</select></p>';
 
@@ -409,7 +409,7 @@ class Editor {
 		this.isRunning = false;
 		$("#siedler_board").remove();
 		$("body").removeClass("playing");
-		message(false);
+		message(false, '');
 	}
 
 	async run(situation) {

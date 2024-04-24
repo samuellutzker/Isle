@@ -11,6 +11,8 @@ class Editor:
 		self.reward_discovery = True
 		self.reward_colony = 2
 		self.board = [[]]
+		self.robber = []
+		self.pirate = []
 		self.room = room
 		# self._snumbers0 = [5,2,6,3,8,10,9,12,11,4,8,10,9,4,5,6,3,11] # standard setup
 
@@ -18,14 +20,16 @@ class Editor:
 		return self.board[y][x] if x < self.width and y < self.height and x >= 0 and y >= 0 else None
 
 	def resizeBoard(self, width, height, shift_x, shift_y):
-		board = [[self.lookup(x-shift_x, y-shift_y) for x in range(width)] for y in range(height)]
-		self.board = board
+		self.board = [[self.lookup(x-shift_x, y-shift_y) for x in range(width)] for y in range(height)]
+		self.robber = [[x+shift_x, y+shift_y] for x,y in self.robber]
+		self.pirate = [[x+shift_x, y+shift_y] for x,y in self.pirate]
 		self.width = width
 		self.height = height
 
 	async def describeTo(self, user):
 		situation = { k:v for k,v in vars(self).items() if k != 'room'}
 		await user.receive(at='editor', do='load', situation=situation)
+		await user.receive(at='editor', do='message', msg='Editor room.')
 
 	async def move(self, action, **kwargs):
 		if action == 'save' and 'name' in kwargs:
@@ -76,6 +80,15 @@ class Editor:
 
 				if self.board[y][x] is not None:
 					await self.room.broadcast(at='editor', do='delete', x=kwargs['x'], y=kwargs['y'], hex=self.board[y][x])
+
+				if [x,y] in self.robber:
+					self.robber.remove([x,y])
+					await self.room.broadcast(at='editor', do='robber', x=kwargs['x'], y=kwargs['y'], remove=True)
+
+				if [x,y] in self.pirate:
+					self.pirate.remove([x,y])
+					await self.room.broadcast(at='editor', do='pirate', x=kwargs['x'], y=kwargs['y'], remove=True)
+
 				# else shrink board
 				self.board[y][x] = kwargs['hex']
 
@@ -97,6 +110,10 @@ class Editor:
 		self.__dict__ |= kwargs
 
 		scenario = { k:v for k,v in vars(self).items() if k not in ['room', 'shift_x', 'shift_y'] }
+		# No room for not existing robber, pirate...
+		if len(self.pirate) == 0: del self.pirate
+		if len(self.robber) == 0: del self.robber
+
 		try:
 			f = open(f"scenarios/{name.lower()}.json", "w")
 			f.write(json.dumps(scenario))
