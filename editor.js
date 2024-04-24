@@ -1,8 +1,6 @@
 'use strict';
 
 // Next:
-// Problem with robber position after resizeboard
-// 
 // Set author, text
 
 class Editor {
