@@ -384,7 +384,7 @@ class Scene {
 			// village / city / road
 			if (this.mouse.cursor.x != this.mouse.board.x || this.mouse.cursor.y != this.mouse.board.y) {
 				for (; this.mouse.numCursors > 0; --this.mouse.numCursors)
-					this.remove('cursor') // , this.mouse.cursor.x, this.mouse.cursor.y);
+					this.remove('cursor'); // , this.mouse.cursor.x, this.mouse.cursor.y);
 
 				if (!this.mouse.cursorOn) return;
 

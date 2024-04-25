@@ -1,7 +1,6 @@
 'use strict';
 
 // Next:
-// Overwrite check
 // Shrink board upon delete
 // Set author, text
 

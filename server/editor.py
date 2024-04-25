@@ -126,7 +126,7 @@ class Editor:
 
 		scenario = { k:v for k,v in vars(self).items() if k not in ['room', 'shift_x', 'shift_y'] }
 
-		# No room for non-existing robber / pirate...
+		# Trigger random distribution. No room for non-existing robber / pirate...
 		if len(scenario['robber']) == 0: del scenario['robber']
 		if len(scenario['pirate']) == 0: del scenario['pirate']
 
