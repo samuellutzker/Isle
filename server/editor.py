@@ -1,4 +1,5 @@
 import json
+import pathlib
 from error import GameError
 
 class Editor:
@@ -31,9 +32,9 @@ class Editor:
 		await user.receive(at='editor', do='load', situation=situation)
 		await user.receive(at='editor', do='message', msg='Editor room.')
 
-	async def move(self, action, **kwargs):
+	async def move(self, user, action, **kwargs):
 		if action == 'save' and 'name' in kwargs:
-			await self.save(**kwargs)
+			await self.save(user, **kwargs)
 
 		elif action == 'pile' and 'name' in kwargs and 'content' in kwargs:
 			vars(self)[kwargs['name']] = kwargs['content']
@@ -43,6 +44,7 @@ class Editor:
 			x, y = kwargs['x'] + self.shift_x, kwargs['y'] + self.shift_y
 			if self.lookup(x,y) is None or type(self.lookup(x,y)) != dict:
 				raise GameError('No terrain here.')
+
 			figure = 'pirate' if self.board[y][x]['terrain'] == 'water' else 'robber'
 			if figure not in vars(self):
 				vars(self)[figure] = []
@@ -106,16 +108,30 @@ class Editor:
 		except Exception as e:
 			raise GameError(f'Error loading scenario {name}')
 
-	async def save(self, name, **kwargs):
+	async def save(self, user, name, **kwargs):
+		def proper(s):
+			return len(s) > 0 and len(s) < 16 and s.replace(' ','').isalnum() and s.isascii()
+
+		if not proper(name):
+			await self.room.broadcast(at='editor', do='message', msg=f'Save scenario failed. Illegal file name.')
+			return
+
 		self.__dict__ |= kwargs
 
+		path = f"scenarios/{name.lower()}.json"
+
+		if pathlib.Path(path).is_file() and ('overwrite' not in kwargs or not kwargs['overwrite']):
+			await user.receive(dialog='File exists. Overwrite?', options=dict(yes=dict(do='editor', what={ 'action' : 'save', 'name' : name, 'overwrite' : True }), no=None))
+			return
+
 		scenario = { k:v for k,v in vars(self).items() if k not in ['room', 'shift_x', 'shift_y'] }
-		# No room for not existing robber, pirate...
-		if len(self.pirate) == 0: del self.pirate
-		if len(self.robber) == 0: del self.robber
+
+		# No room for non-existing robber / pirate...
+		if len(scenario['robber']) == 0: del scenario['robber']
+		if len(scenario['pirate']) == 0: del scenario['pirate']
 
 		try:
-			f = open(f"scenarios/{name.lower()}.json", "w")
+			f = open(path, "w")
 			f.write(json.dumps(scenario))
 			f.close()
 			await self.room.broadcast(at='editor', do='message', msg=f'Scenario {name} was saved.')

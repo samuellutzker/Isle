@@ -65,8 +65,10 @@ class Room {
                     break;
 
                 case 'del_user' :
-                    this.#users[obj.id].remove();
-                    delete this.#users[obj.id];
+                    if (this.#users[obj.id]) {
+                        this.#users[obj.id].remove();
+                        delete this.#users[obj.id];
+                    }
                     break;
 
                 case 'active' :

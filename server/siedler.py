@@ -439,7 +439,7 @@ class Siedler:
 						if not self.initial_phase:
 							self.active_player.vp += self.reward_colony
 							text = f"<div class='icon resources'></div><br />{self.active_player.name} has settled on a new colony. <b>+{self.reward_colony} VP</b>"
-							await self.room.broadcast(notify=text, title='Award', style='gold')
+							await self.room.broadcast(dialog=text, title='Award', style='gold')
 						self.active_player.colonies.append(self.board[hy][hx]['colony'])
 
 
@@ -481,7 +481,7 @@ class Siedler:
 
 		if award:
 			text = f"<div class='icon road_max'></div><br />{self.players[self.longest_road].name} now has the longest road. <b>+2 VP</b>"
-			await self.room.broadcast(notify=text, title='Award', style='gold')
+			await self.room.broadcast(dialog=text, title='Award', style='gold')
 
 		await self.room.broadcast(at='game', do='build', x=x, y=y, what=self.edges[y][x])
 
@@ -577,7 +577,7 @@ class Siedler:
 	async def prompt(self):
 		if self.active_player.vp >= self.vp_limit: # victory!
 			await self.room.broadcast(at='game', do='win', id=self.active_player.id, description=f"{self.active_player.name} won.")
-			await self.room.broadcast(notify=f'<div class="icon trophy"></div><br />{self.active_player.name} has <b>{self.active_player.vp} VP</b> and wins!', title='Game over', style='gold')
+			await self.room.broadcast(dialog=f'<div class="icon trophy"></div><br />{self.active_player.name} has <b>{self.active_player.vp} VP</b> and wins!', title='Game over', style='gold')
 			for player in self.players:
 				for card in player.cards:
 					await self.room.broadcast(at='game', do='use_card', card=strip_func(card), id=player.id)
@@ -800,7 +800,7 @@ class Siedler:
 			self.largest_army = self.active_idx
 			self.active_player.vp += 2
 			text = f"<div class='icon knights'></div><br />{self.active_player.name} now has the largest army. <b>+2 VP</b>"
-			await self.room.broadcast(notify=text, title='Award', style='gold')
+			await self.room.broadcast(dialog=text, title='Award', style='gold')
 
 		return True
 

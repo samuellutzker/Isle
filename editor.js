@@ -1,6 +1,8 @@
 'use strict';
 
 // Next:
+// Overwrite check
+// Shrink board upon delete
 // Set author, text
 
 class Editor {
@@ -402,7 +404,8 @@ class Editor {
 	}
 
 	leave() {
-		this.scene.clearEvents();
+		if (this.scene)
+			this.scene.clearEvents();
 		this.scene = null;
 		this.isRunning = false;
 		$("#siedler_board").remove();

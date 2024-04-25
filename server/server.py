@@ -23,7 +23,7 @@ async def handler(socket, path):
             act = query.pop('do')
 
         except websockets.exceptions.ConnectionClosed as e:
-            print('Connection lost.', 'Message:', e)
+            print('Connection lost:', e)
             user = User.find(socket)
             if user is not None:
                 user.alive = False
@@ -35,7 +35,7 @@ async def handler(socket, path):
             continue
 
         if act == 'enter':
-            if not 'room' in query or not 'name' in query:
+            if 'room' not in query or 'name' not in query:
                 continue
                 
             room_name = query['room']
@@ -54,13 +54,14 @@ async def handler(socket, path):
                 await user.remove()
 
         else:
-            try:
-                user = User.find(socket)
-                if user is None:
-                    if act != 'exit':
-                        await error('Not logged in.')
+            user = User.find(socket)
+            if user is None:
+                if act != 'exit':
+                    await error('Not logged in.')
+                continue
 
-                elif act == 'exit':
+            try:
+                if act == 'exit':
                     await user.remove()
 
                 elif act == 'send' and 'msg' in query:
@@ -68,7 +69,7 @@ async def handler(socket, path):
                     await user.message(to, **query['msg'])
 
                 elif act == 'move' and 'x' in query and 'y' in query:
-                    x, y = (query['x'], query['y']) if user.room.game is None else (user.x, user.y)
+                    x, y = (query['x'], query['y']) if user.room.game is None or user.room.is_editor else (user.x, user.y)
                     await user.move(x, y)
 
                 elif act == 'status' and 'msg' in query:
@@ -86,14 +87,14 @@ async def handler(socket, path):
                 elif act == 'quit_game':
                     await user.room.quit_game()
 
-                elif act == 'game' and 'what' in query:
+                elif (act == 'game' and not user.room.is_editor or act == 'editor' and user.room.is_editor) and 'what' in query:
                     await user.game_action(query['what']) # object containing the move
 
-                elif act == 'editor' and 'what' in query:
-                    await room.editor_action(query['what'])
+                else:
+                    print(f'Received illegal query: {data}')
                     
             except GameError as e:
-                print(f'Could not execute {act}. Error:', e)
+                await error(e)
 
 
 if local_ws:

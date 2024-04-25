@@ -136,8 +136,15 @@ class Interface {
     async onMessage(obj) {
         if (obj.alert) {
             dialog("Error", obj.alert, null, null, "red");
-        } else if (obj.notify) {
-            dialog(obj.title ?? "Catan", obj.notify, null, null, obj.style ?? null);
+        } else if (obj.dialog) {
+            let options = null;
+            if (obj.options) {
+                options = {};
+                for (let btn in obj.options) {
+                    options[btn] = obj.options[btn] ? () => Server.query(obj.options[btn]) : null;
+                }
+            }
+            dialog(obj.title ?? "Catan", obj.dialog, options, null, obj.style ?? null);
         } else if (obj.scenarios) {
             this.#scenarios = obj.scenarios;
         } else if (this.#room) {

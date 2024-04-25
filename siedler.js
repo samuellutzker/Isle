@@ -323,7 +323,8 @@ class Siedler {
 
 
 	leave() {
-		this.scene.clearEvents();
+		if (this.scene)
+			this.scene.clearEvents();
 		this.scene = null;
 		this.running = false;
 		$("#siedler_board").remove();

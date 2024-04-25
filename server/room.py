@@ -20,16 +20,17 @@ class Room:
         self.members = {} # id -> user
         self.name = room_name
         self.game = None
-        self.editor = None
+        self.is_editor = False
         self.colors = ["red", "blue", "green", "ivory"] # ["indianred", "ivory", "coral", "royalblue"]
         random.shuffle(self.colors)
+        print(f'Room {room_name} opened.')
 
     # sends message to a room member to(id)
     async def message(self, to, **msg):
         if to is None:
             await self.broadcast(**msg)
         elif to not in self.members:
-            raise GameError('Attempted to contact someone outside of the room.')
+            print(f'Attempted to contact someone outside of the room, id: {to}.')
         elif self.members[to].alive:
             try:
                 await self.members[to].socket.send(json.dumps(msg))
@@ -53,7 +54,6 @@ class Room:
                 except KeyError as e:
                     pass
 
-
     async def enter(self, user, key):
         def proper(s):
             return len(s) > 0 and len(s) < 16 and s.isalnum() and s.isascii()
@@ -65,7 +65,7 @@ class Room:
             if not proper(self.name): self.remove()
             raise GameError('Choose a proper name, please (only alphanumeric, no whitespace).')
 
-        if self.game is not None and key is None:
+        if self.game is not None and key is None and not self.is_editor:
             raise GameError('A game is running in this room.')
 
         user.room = self
@@ -84,18 +84,18 @@ class Room:
         # broadcast that i've joined
         await self.broadcast(user.id, at='room', do='add_user', id=user.id, name=user.name, x=user.x, y=user.y, status=user.msg, color=user.color)
 
-        if self.editor is not None:
-            await user.receive(at='room', do='editor', show=True)
-            await self.editor.describeTo(user)
-
-        elif self.game is not None:
-            try:
-                await user.receive(at='room', do='game', show=True)
-                await self.game.resume(user, key)
-                await self.game_key(user)
-            except GameError as e:
-                await user.receive(at='room', do='enter', ok=False)
-                raise GameError(e)
+        if self.game is not None:
+            if self.is_editor:
+                await user.receive(at='room', do='editor', show=True)
+                await self.game.describeTo(user)
+            else:
+                try:
+                    await user.receive(at='room', do='game', show=True)
+                    await self.game.resume(user, key)
+                    await self.game_key(user)
+                except GameError as e:
+                    await user.receive(at='room', do='enter', ok=False)
+                    raise GameError(e)
 
     async def leave(self, user):
         if user.id not in self.members:
@@ -109,11 +109,11 @@ class Room:
         user.room = None
 
         if len(self.members) == 0:
-            if self.game is None and self.editor is None:
+            if self.game is None:
                 self.remove()
                 print(f'Room {self.name} removed.')
             else:
-                print(f'Game / Editor in room {self.name} persistant.')
+                print(f"{'Editor' if self.is_editor else 'Game'} in room {self.name} persistent.")
 
     async def update_scenarios(self):
         scenarios = []
@@ -130,10 +130,6 @@ class Room:
         else:
             raise GameError(f'Error occurred, could not delete {name}.')
 
-    async def editor_action(self, what):
-        if self.editor is not None:
-            await self.editor.move(**what)
-
     async def game_key(self, user=None):
         if user is None:
             for i in self.members:
@@ -142,37 +138,30 @@ class Room:
            await user.receive(at='room', do='game_key', key=self.game.get_key(user))
 
     async def new_game(self, user, scenario, debug_auth=None):
-        try:
-            await self.quit_game()
-            self.game = Siedler(self, scenario, debug_auth) # select scenario here
-            await self.broadcast(at='room', do='game', show=True)
-            await self.game_key()
-            await self.game.start()
-        except GameError as e:
-            await user.error(e)
+        await self.quit_game()
+        self.game = Siedler(self, scenario, debug_auth) # select scenario here
+        await self.broadcast(at='room', do='game', show=True)
+        await self.game_key()
+        await self.game.start()
+        self.is_editor = False
+        print(f'New game in room {self.name}.')
 
     async def new_editor(self, user, scenario):
-        try:
-            await self.quit_game()
-            self.editor = Editor(self)
-            if scenario is not None:
-                await self.editor.load(scenario)
-            await self.broadcast(at='room', do='editor', show=True)
-            for i in self.members:
-                await self.editor.describeTo(self.members[i])
-        except GameError as e:
-            await user.error(e)
-
+        await self.quit_game()
+        self.game = Editor(self)
+        if scenario is not None:
+            await self.game.load(scenario)
+        await self.broadcast(at='room', do='editor', show=True)
+        for i in self.members:
+            await self.game.describeTo(self.members[i])
+        self.is_editor = True
+        print(f'New editor in room {self.name}.')
 
     async def quit_game(self):
-        if self.editor is not None:
-            self.editor = None
-            await self.broadcast(at='room', do='editor', show=False)
-            await self.broadcast(notify='Editor was quit.')
         if self.game is not None:
             self.game = None
-            await self.broadcast(at='room', do='game', show=False)
-            await self.broadcast(notify='Game was quit.')
+            await self.broadcast(at='room', do='editor' if self.is_editor else 'game', show=False)
+            await self.broadcast(dialog='Editor was quit.' if self.is_editor else 'Game was quit.')
 
     def remove(self):
         Room.all.pop(self.name)
