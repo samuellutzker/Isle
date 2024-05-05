@@ -355,11 +355,12 @@ class Scene {
 				this.mouse.closest = this.centerToWorld(this.mouse.board.x, this.mouse.board.y);
 			}
 
-			const flashDir = [this.mouse.world.x, this.mouse.world.y, 0.0]; 
 			if (!this.mouse.isTouch) {
+				const flashDir = [this.mouse.world.x, this.mouse.world.y, 0.0].map((e,i) => e - this.cam.pos[i]);
 				this.flashlight.move(gl, this.cam.pos, this.shader);
-				this.flashlight.turn(gl, flashDir.map((e,i) => { return e - this.cam.pos[i] }), this.shader);
+				this.flashlight.turn(gl, flashDir, this.shader);
 			}
+			this.lamp.move(gl, this.cam.pos, this.shader);
 		}
 
 		this.drawQueue();
@@ -420,10 +421,9 @@ class Scene {
 		this.backlight = new Light(gl, [0.15,0.15,0.15], [0.35,0.35,0.35], [0.15,0.15,0.15]);
 		this.backlight.turn(gl, [0.0, -0.3, 1.0], this.shader);
 
-		this.lamp = new Light(gl, [0.05,0.05,0.05], [0.7,0.7,0.7], [0.35,0.35,0.35], 1.0, 0.02, 0.0032, -1.0);
-		this.lamp.move(gl, [0, 0, 4], this.shader);
+		this.lamp = new Light(gl, [0.05,0.05,0.05], [0.6,0.6,0.6], [0.35,0.35,0.35], 1.0, 0.02, 0.0032, -1.0);
 
-		this.flashlight = new Light(gl, [0.0,0.0,0.0],[0.9,0.9,0.9], [0.9,0.9,0.9], 3.0, 0.02, 0.0096, Math.cos(12.5*Math.PI/180.0));
+		this.flashlight = new Light(gl, [0.0,0.0,0.0],[0.9,0.9,0.9], [0.9,0.9,0.9], 3.0, 0.001, 0.00016, Math.cos(12.5*Math.PI/180.0));
 	}
 
 	placeFigure(figure, x, y, isEditor) {
@@ -467,7 +467,7 @@ class Scene {
 		this.doAction = clickHandler;
 
 		// Shader:		
-		await this.shader.load(gl, 'webgl/vertex.glsl', 'webgl/frag.glsl');
+		await this.shader.load(gl, 'js/webgl/vertex.glsl', 'js/webgl/frag.glsl');
 		this.shader.use(gl);
 
 		// Cam:		

@@ -47,8 +47,8 @@ class Interface {
             "Prices" : () => dialog("Building Prices", $("#info").html(), null, null, 'wide'), 
             "Rules" : () => dialog("Open Rules", "<p>Display the rules of Catan base game, or the seafarer extension?</p>", {
                     "Cancel" : null,
-                    "Base" : () => window.open('rules_catan_base_2020.pdf'),
-                    "Seafarers" : () => window.open('rules_catan_seafarers_2021.pdf')
+                    "Base" : () => window.open('rules/rules_catan_base_2020.pdf'),
+                    "Seafarers" : () => window.open('rules/rules_catan_seafarers_2021.pdf')
                 })
         }, null, 'wide');
     }

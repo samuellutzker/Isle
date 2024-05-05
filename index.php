@@ -5,26 +5,28 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
         <link rel="icon" type="image/x-icon" href="images/favicon.ico">
-        <link rel="stylesheet" href="style.css?v=<?php echo filemtime('style.css'); ?>" />
-        <link rel="stylesheet" href="siedler.css?v=<?php echo filemtime('siedler.css'); ?>" />
-        <link rel="stylesheet" href="editor.css?v=<?php echo filemtime('editor.css'); ?>" />
-        <link rel="stylesheet" href="responsive.css?v=<?php echo filemtime('responsive.css'); ?>" />
+
+        <link rel="stylesheet" href="css/style.css?v=<?php echo filemtime('css/style.css'); ?>" />
+        <link rel="stylesheet" href="css/siedler.css?v=<?php echo filemtime('css/siedler.css'); ?>" />
+        <link rel="stylesheet" href="css/editor.css?v=<?php echo filemtime('css/editor.css'); ?>" />
+        <link rel="stylesheet" href="css/responsive.css?v=<?php echo filemtime('css/responsive.css'); ?>" />
+
         <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-        <script src="jquery-3.7.1.min.js"></script>
-        <script src="gl-matrix-min.js"></script>
-        <script src="webgl/light.js"></script>
-        <script src="webgl/shader.js"></script>
-        <script src="webgl/model.js"></script>
-        <script src="modelmaker.js"></script>
-        <script src="scene.js"></script>
-        <script src="server.js"></script>
-        <script src="room.js"></script>
-        <script src="tools.js"></script>
-        <script src="interface.js"></script>
-        <script src="person.js"></script>
-        <script src="videoconn.js"></script>
-        <script src="editor.js"></script>
-        <script src="siedler.js"></script>
+        <script src="js/lib/jquery-3.7.1.min.js"></script>
+        <script src="js/lib/gl-matrix-min.js"></script>
+        <script src="js/webgl/light.js"></script>
+        <script src="js/webgl/shader.js"></script>
+        <script src="js/webgl/model.js"></script>
+        <script src="js/modelmaker.js"></script>
+        <script src="js/scene.js"></script>
+        <script src="js/server.js"></script>
+        <script src="js/room.js"></script>
+        <script src="js/tools.js"></script>
+        <script src="js/interface.js"></script>
+        <script src="js/person.js"></script>
+        <script src="js/videoconn.js"></script>
+        <script src="js/editor.js"></script>
+        <script src="js/siedler.js"></script>
         <script type="text/javascript"> 
 
         const DEBUG_AUTH = "<?php echo $_GET['debug'] ?? ""; ?>";
@@ -143,7 +145,7 @@
                 <input type="checkbox" id="checkbox_controls" />
                 <label for="checkbox_controls">&equiv;</label>
                 <div id="room" class="window">
-                    <input type="button" value="Play" id="btn_game" />
+                    <input type="button" value="Start" id="btn_game" />
                     <input type="button" value="Info" id="btn_about" />
                     <input type="button" value="Exit" id="btn_exit" />
                     <br />

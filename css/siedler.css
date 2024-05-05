@@ -9,52 +9,52 @@ canvas#siedler_board {
 }
 
 .bg.lumber {
-    background-image: url('images/terrains/forest.jpg') !important;
+    background-image: url('../images/terrains/forest.jpg') !important;
 }
 .bg.brick {
-    background-image: url('images/terrains/hills.jpg') !important;
+    background-image: url('../images/terrains/hills.jpg') !important;
 }
 .bg.wool {
-    background-image: url('images/terrains/pasture.jpg') !important;
+    background-image: url('../images/terrains/pasture.jpg') !important;
 }
 .bg.grain {
-    background-image: url('images/terrains/fields.jpg') !important;
+    background-image: url('../images/terrains/fields.jpg') !important;
 }
 .bg.ore {
-    background-image: url('images/terrains/mountains.jpg') !important;
+    background-image: url('../images/terrains/mountains.jpg') !important;
 }
 
 /* resources icons */
 
 .icon.generic:before {
-    background-image: url('images/resources/generic.png');
+    background-image: url('../images/resources/generic.png');
     border-color: black;
 }
 .icon.lumber:before {
-    background-image: url('images/resources/lumber.png');
+    background-image: url('../images/resources/lumber.png');
     border-color: darkgreen;
 }
 .icon.brick:before {
-    background-image: url('images/resources/brick.png');
+    background-image: url('../images/resources/brick.png');
     border-color: darkred;
 }
 .icon.wool:before {
-    background-image: url('images/resources/wool.png');
+    background-image: url('../images/resources/wool.png');
     border-color: lightgreen;
 }
 .icon.grain:before {
-    background-image: url('images/resources/grain.png');
+    background-image: url('../images/resources/grain.png');
     border-color: goldenrod;
 }
 .icon.ore:before {
-    background-image: url('images/resources/ore.png');
+    background-image: url('../images/resources/ore.png');
     border-color: darkgray;
 }
 
 /* info icons*/
 
 .icon.knights:before, .icon.road_max:before, .icon.resources:before, .icon.cards:before, .icon.trophy:before {
-    background-image: url('images/symbols/knights.png');
+    background-image: url('../images/symbols/knights.png');
     border-color: transparent;
     background-color: transparent;
 }
@@ -62,16 +62,16 @@ canvas#siedler_board {
     border-color: orange;
 }
 .icon.road_max:before {
-    background-image: url('images/symbols/road_max.png');
+    background-image: url('../images/symbols/road_max.png');
 }
 .icon.resources:before {
-    background-image: url('images/symbols/resources.png');
+    background-image: url('../images/symbols/resources.png');
 }
 .icon.cards:before {
-    background-image: url('images/symbols/cards.png');
+    background-image: url('../images/symbols/cards.png');
 }
 .icon.trophy:before {
-    background-image: url('images/symbols/trophy.png');
+    background-image: url('../images/symbols/trophy.png');
 }
 
 /* card */
