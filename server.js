@@ -24,7 +24,7 @@ class Server {
 
         } catch (error) {
             console.error('Attempt failed. Reason:', error, `Trying again in ${reconnectInterval}s...`);
-            setTimeout(this.#reconnect, 1000*reconnectInterval);
+            setTimeout(this.#reconnect, 1000 * reconnectInterval);
             this.#failed = [];
         }
     };

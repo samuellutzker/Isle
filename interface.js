@@ -66,7 +66,12 @@ class Interface {
                 You may resume playing with the address in the navigation bar and clipboard.</p>`;
 
             dialog("Leave game", html, { 
-                "Pause" : () => { navigator.clipboard.writeText(window.location.href); leave(); }, 
+                "Pause" : () => { 
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(window.location.href); 
+                    }
+                    leave(); 
+                }, 
                 "Stop" : Siedler.stop,
                 "Cancel" : null }, null, 'wide');
         } else {

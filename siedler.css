@@ -52,15 +52,13 @@ canvas#siedler_board {
 }
 
 /* info icons*/
+
 .icon.knights:before, .icon.road_max:before, .icon.resources:before, .icon.cards:before, .icon.trophy:before {
     background-image: url('images/symbols/knights.png');
     border-color: transparent;
     background-color: transparent;
-/*    width: 60%;*/
-/*    border-radius: 0;*/
 }
 .icon.gold:before {
-/*    border-color: darkgoldenrod; */
     border-color: orange;
 }
 .icon.road_max:before {
@@ -138,6 +136,11 @@ div.card .pic {
     background-position: center;
 }
 
+div.card h1 {
+    font-size: 2.5em;
+    font-weight: normal;
+}
+
 /* card end */
 
 .icon {
@@ -151,6 +154,7 @@ div.card .pic {
     padding: 3px;
     border-radius: 3px;
 }
+
 .icon:before {
     content: '';
     width: 1em;
@@ -170,9 +174,8 @@ div#storageDlg .change {
     background-color: rgba(220,220,220,0.6);
 }
 
-/*div#storage_dlg .have {
-
-}*/
+/* div#storage_dlg .have {
+} */
 
 div#dialog div.icon {
     width: auto;
@@ -260,7 +263,7 @@ div.structure svg {
 }
 div.structure h2 {
     display: inline-block;
-    font-family: 'Playfair';
+    font-family: 'Playfair Display';
     width: 40%;
     margin: 0;
 }

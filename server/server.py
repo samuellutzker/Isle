@@ -5,7 +5,7 @@ import asyncio
 import websockets
 import ssl
 from room import User, Room
-from siedler import GameError
+from tools import log, GameError
 
 local_ws = True
 
@@ -23,7 +23,7 @@ async def handler(socket, path):
             act = query.pop('do')
 
         except websockets.exceptions.ConnectionClosed as e:
-            print('Connection lost:', e)
+            log('Connection lost:', e)
             user = User.find(socket)
             if user is not None:
                 user.alive = False
@@ -31,7 +31,7 @@ async def handler(socket, path):
             return
 
         except GameError as e:
-            print('Bad request by client.', 'Received:', data, 'Error:', e)
+            log('Bad request by client.', 'Received:', data, 'Error:', e)
             continue
 
         if act == 'enter':
@@ -40,7 +40,7 @@ async def handler(socket, path):
                 
             room_name = query['room']
             user_name = query['name']
-            key = query['key'] if 'key' in query else None
+            key = query.get('key')
 
             # new room / open existing room
             room = Room.open(room_name)
@@ -65,8 +65,7 @@ async def handler(socket, path):
                     await user.remove()
 
                 elif act == 'send' and 'msg' in query:
-                    to = query['to'] if 'to' in query else None
-                    await user.message(to, **query['msg'])
+                    await user.message(query.get('to'), **query['msg'])
 
                 elif act == 'move' and 'x' in query and 'y' in query:
                     x, y = (query['x'], query['y']) if user.room.game is None or user.room.is_editor else (user.x, user.y)
@@ -76,12 +75,12 @@ async def handler(socket, path):
                     await user.status(query['msg'])
 
                 elif act == 'new_game':
-                    await user.room.new_game(user, query['scenario'], query['debug'])
+                    await user.room.new_game(user, query.get('scenario'), query.get('debug'))
 
                 elif act == 'new_editor':
-                    await user.room.new_editor(user, query['scenario'] if 'scenario' in query else None)
+                    await user.room.new_editor(user, query.get('scenario'))
 
-                elif act == 'delete_scenario':
+                elif act == 'delete_scenario' and 'scenario' in query:
                     await user.room.delete_scenario(query['scenario'])
 
                 elif act == 'quit_game':
@@ -91,7 +90,7 @@ async def handler(socket, path):
                     await user.game_action(query['what']) # object containing the move
 
                 else:
-                    print(f'Received illegal query: {data}')
+                    log(f'Received illegal query: {data}')
                     
             except GameError as e:
                 await error(e)
@@ -99,9 +98,9 @@ async def handler(socket, path):
 
 if local_ws:
     # WS:
-    start_server = websockets.serve(handler, "localhost", 8080)
+    start_server = websockets.serve(handler, "0.0.0.0", 8080)
 else:
-    # WSS (Raspi):
+    # WSS:
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ctx.load_cert_chain('server/cert/fullchain.pem', 'server/cert/privkey.pem')
     start_server = websockets.serve(handler, "0.0.0.0", 8765, ssl=ctx)

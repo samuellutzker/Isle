@@ -1,6 +1,6 @@
 import json
 import pathlib
-from error import GameError
+from tools import GameError
 
 class Editor:
 	def __init__(self, room):
@@ -26,6 +26,26 @@ class Editor:
 		self.pirate = [[x+shift_x, y+shift_y] for x,y in self.pirate]
 		self.width = width
 		self.height = height
+		self.shift_x += shift_x
+		self.shift_y += shift_y
+
+	def shrinkBoard(self):
+		# Brute force search
+		frame_x = [x for x in range(self.width) if len([y for y in range(self.height) if self.board[y][x] is not None]) > 0]
+		frame_y = [y for y in range(self.height) if len([x for x in range(self.width) if self.board[y][x] is not None]) > 0]
+
+		if len(frame_x) == 0:
+			self.height = 0
+			self.width = 0
+			self.shift_x = 0
+			self.shift_y = 0
+			self.board = [[]]
+			return
+
+		shift_x, shift_y = min(frame_x), min(frame_y)
+		width, height = max(frame_x)+1-shift_x, max(frame_y)+1-shift_y
+
+		self.resizeBoard(width, height, -shift_x, -shift_y)
 
 	async def describeTo(self, user):
 		situation = { k:v for k,v in vars(self).items() if k != 'room'}
@@ -77,9 +97,6 @@ class Editor:
 				if w > self.width or h > self.height:
 					self.resizeBoard(w, h, sh_x, sh_y)
 
-				self.shift_x += sh_x
-				self.shift_y += sh_y
-
 				if self.board[y][x] is not None:
 					await self.room.broadcast(at='editor', do='delete', x=kwargs['x'], y=kwargs['y'], hex=self.board[y][x])
 
@@ -96,6 +113,8 @@ class Editor:
 
 			if kwargs['hex'] is not None:
 				await self.room.broadcast(at='editor', do='hex', x=kwargs['x'], y=kwargs['y'], hex=kwargs['hex'])
+			else:
+				self.shrinkBoard()
 
 	async def load(self, name):
 		try:

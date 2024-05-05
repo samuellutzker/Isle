@@ -3,6 +3,7 @@
 const makeMovable = (what, callbackNewPos) => {
 	const f = function (e) {
 		$(this).off('pointerdown', f);
+
 		// prevent bubbling up from children:
 		// if (e.target.id != $(this).prop('id'))
 		// 	return;
@@ -16,7 +17,6 @@ const makeMovable = (what, callbackNewPos) => {
 		$(document).on('pointermove', (e) => {
 			dir = { x: e.clientX - pos.x, y: e.clientY - pos.y };
 			$(this).css('left', offs.left + dir.x + 'px').css('top', offs.top + dir.y + 'px').css('zIndex', 9999);
-
 		});
 
 		$(document).on('pointerup', (e) => {
@@ -24,12 +24,6 @@ const makeMovable = (what, callbackNewPos) => {
 			if (callbackNewPos)
 				callbackNewPos({ x: offs.left + dir.x, y: offs.top + dir.y });
 			
-			// const middle = $(window).height() / 2;
-			// if (offs.top+dir.y > middle)
-			// 	$(this).addClass('lowerhalf');
-			// else
-			// 	$(this).removeClass('lowerhalf');
-
 			$(this).css('transition', '').css('zIndex', '').on('pointerdown', f);
 		});
 	};
@@ -69,8 +63,6 @@ const intercept = function (prevent, filter, except) {
 const closeDialog = () => dialog();
 
 const dialog = (title, text, options, onopen, className) => {
-
-
 	const closeDialog = () => {
 		$("#dialog, #curtain").remove();
 		$(document).off('keypress');
@@ -84,7 +76,6 @@ const dialog = (title, text, options, onopen, className) => {
 		}
 	};
 
-
 	if (!title && !text) {
 		$("#dialog button.default").click(); 
 		return;
@@ -96,7 +87,7 @@ const dialog = (title, text, options, onopen, className) => {
 		return;
 	}
 
-	dialog.msg = message(); // Close open messages
+	dialog.msg = message(); // Hide open messages
 	dialog.open = true;
 
     $("#main").append(`<div id='dialog' class='window' title='${title}'><div>${text}</div></div><div id='curtain'></div>`);
@@ -136,9 +127,9 @@ const dialog = (title, text, options, onopen, className) => {
     	onopen();
 };
 
-// persistant: true/false => timeout off/on for showing the message
-// if msg is null, current messages should only be cleared.
-// return the arguments for the old message.
+// persistant: determines if the message has a timer.
+// msg: null hides current message, '' clears it.
+// returns the arguments for the old message.
 const message = (persistant, msg) => {
 	const old = { 
 		persistant: $("#message").data('timeout') ? false : true,

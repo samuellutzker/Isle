@@ -1,6 +1,6 @@
 import json
 import random
-from siedler import GameError
+from tools import GameError
 
 class User:
 

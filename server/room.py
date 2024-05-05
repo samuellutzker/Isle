@@ -1,9 +1,10 @@
 import os
 import json
 import random
-from siedler import Siedler, GameError
-from editor import Editor
 from user import User
+from siedler import Siedler
+from editor import Editor
+from tools import log, GameError
 
 class Room:
 
@@ -23,14 +24,14 @@ class Room:
         self.is_editor = False
         self.colors = ["red", "blue", "green", "ivory"] # ["indianred", "ivory", "coral", "royalblue"]
         random.shuffle(self.colors)
-        print(f'Room {room_name} opened.')
+        log(f'Room {room_name} opened.')
 
     # sends message to a room member to(id)
     async def message(self, to, **msg):
         if to is None:
             await self.broadcast(**msg)
         elif to not in self.members:
-            print(f'Attempted to contact someone outside of the room, id: {to}.')
+            log(f'Attempted to contact someone outside of the room, id: {to}.')
         elif self.members[to].alive:
             try:
                 await self.members[to].socket.send(json.dumps(msg))
@@ -111,9 +112,9 @@ class Room:
         if len(self.members) == 0:
             if self.game is None:
                 self.remove()
-                print(f'Room {self.name} removed.')
+                log(f'Room {self.name} removed.')
             else:
-                print(f"{'Editor' if self.is_editor else 'Game'} in room {self.name} persistent.")
+                log(f"{'Editor' if self.is_editor else 'Game'} in room {self.name} persistent.")
 
     async def update_scenarios(self):
         scenarios = []
@@ -144,7 +145,7 @@ class Room:
         await self.game_key()
         await self.game.start()
         self.is_editor = False
-        print(f'New game in room {self.name}.')
+        log(f'New game in room {self.name}.')
 
     async def new_editor(self, user, scenario):
         await self.quit_game()
@@ -155,7 +156,7 @@ class Room:
         for i in self.members:
             await self.game.describeTo(self.members[i])
         self.is_editor = True
-        print(f'New editor in room {self.name}.')
+        log(f'New editor in room {self.name}.')
 
     async def quit_game(self):
         if self.game is not None:

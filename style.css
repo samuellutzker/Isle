@@ -1,11 +1,40 @@
+/*
 @import url('https://fonts.googleapis.com/css?family=Playfair+Display|Quicksand&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap');
+*/
 
 @font-face {
     font-family: Arcade;
     font-display: swap;
-    src: url('arcade.ttf');
+    src: url('fonts/arcade.ttf');
+}
+
+@font-face {
+    font-family: Playfair Display;
+    font-optical-sizing: auto;
+    font-style: normal;
+    src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf');
+}
+
+@font-face {
+    font-family: Playfair Display;
+    font-optical-sizing: auto;
+    font-style: italic;
+    src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf');
+}
+
+@font-face {
+    font-family: MedievalSharp;
+    font-display: swap;
+    src: url('fonts/MedievalSharp-Regular.ttf');
+}
+
+@font-face {
+    font-family: Quicksand;
+    font-optical-sizing: auto;
+    font-style: normal;
+    src: url('fonts/Quicksand-VariableFont_wght.ttf');
 }
 
 * {

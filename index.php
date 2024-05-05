@@ -38,7 +38,7 @@
                         if ($entry != "." && $entry != "..") {
                             $path = $dir."/".$entry;
                             if (is_dir($path)) {
-                                $files = array_merge($files, folder_walk($path));
+                                $files = array_merge($files, folder_walk($path, ...$extensions));
                             } else {
                                 $parts = explode('.', $entry);
                                 if (in_array($parts[sizeof($parts)-1], $extensions)) {
@@ -98,12 +98,16 @@
         }
 
         const startup = async () => {
-            const WSS_URL = LOCAL_WS ? "ws://localhost:8080" : "wss://lutzker.ddns.net:8765";
+            const WSS_URL = LOCAL_WS ? `ws://${window.location.hostname}:8080` : `wss://${window.location.hostname}:8765`;
 
+            const allImages = <?php echo json_encode(folder_walk('images', 'jpg', 'jpeg', 'png')); ?>;
+            const audios = <?php echo json_encode(get_file_roots('sounds', 'mp3')); ?>;
             const scenarios = <?php echo json_encode(get_file_roots('scenarios', 'json')); ?>;
-            Siedler.audioPreload(<?php echo json_encode(get_file_roots('sounds', 'mp3')); ?>);
-            await imgPreload(<?php echo json_encode(folder_walk('images', 'jpg', 'jpeg', 'png')); ?>);
+
+            Siedler.audioPreload(audios);
+            await imgPreload(allImages);
             await Server.connect(WSS_URL);
+
 
             <?php
                 if (isset($_GET['user'], $_GET['room'], $_GET['key']) && is_proper($_GET['user'], $_GET['room'], $_GET['key']))

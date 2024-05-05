@@ -1,23 +1,9 @@
 import re
 import json
-import hashlib
-import hmac
+import secrets
+import string
 import random
-from error import GameError
-
-# roadmap:
-# X scenario editor
-# X groups of hexes, reward settlement on new group
-# - fix touch
-
-def strip_func(a):
-	if type(a) == list:
-		return [strip_func(b) for b in a]
-	return { k:v for k,v in a.items() if not callable(v) }
-
-def combine(a, b): # combine (+) contents of two dicts
-	return { k: a.get(k, 0) + b.get(k, 0) for k in set(a) | set(b) }
-
+from tools import GameError, combine, strip_func
 
 class Siedler:
 	def __init__(self, room, scenario_name, debug_auth=None):
@@ -73,11 +59,11 @@ class Siedler:
 			self.knights = 0
 			self.road_max = 0
 			self.vp = 2
-			self.key = self.pass_hash(user.name)
+			self.key = self.generate_password(30)
 
-		def pass_hash(self, name):
-			server_secret = "f0cky0u"
-			return hmac.new(bytes(server_secret, 'UTF-8'), name.encode(), hashlib.sha256).hexdigest()
+		def generate_password(self, length):
+			options = string.ascii_uppercase + string.ascii_lowercase + string.digits
+			return "".join([secrets.choice(options) for i in range(length)])
 
 		def storage_size(self):
 			return sum(self.storage.values())
@@ -422,6 +408,7 @@ class Siedler:
 		if structure == 'move_ship':
 			self.active_player.ship_moved = True
 			self.edges[y][x] = None
+			self.active_player.figures['ship'] += 1
 			self.queue.append(dict(func=self.free_build, what=['ship'], expected='build', description=f'Place ship.'))
 			await self.room.broadcast(at='game', do='remove', what='ship', x=x, y=y)
 			return
@@ -509,7 +496,7 @@ class Siedler:
 			await user.receive(alert=f'Game has finished.')
 			return
 
-		todo = self.queue.pop() # dict containing: func, expected, description, player, simultaneous
+		todo = self.queue.pop() # dict containing: func, expected, description, player
 
 		try:
 			if 'expected' in todo and action != todo['expected']:
