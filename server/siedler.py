@@ -184,6 +184,7 @@ class Siedler:
 			u = set(self.edge_adj_edges(x,y))
 			return list(set().union(*[self.edge_adj_edges(x2,y2) for x2,y2 in u]) - {(x,y)})
 
+
 	# check out where i can build what
 	def calc_build_options(self, todo):
 		f = lambda x: x
@@ -212,6 +213,7 @@ class Siedler:
 		# pirate takes away some options:
 		for x,y in self.hex_adj_edges(self.pirate[0], self.pirate[1]):
 			self.build_options[y][x] = list(set(self.build_options[y][x])-{'move_ship','ship'})
+
 
 	# edge coord -> list of possible structures
 	def can_build(self, x, y, initial_phase=False):
@@ -263,8 +265,8 @@ class Siedler:
 			# connection to own road
 			if 'village' in options:
 				# if this is the initial phase make sure we are allowing a village here
-				if initial_phase and len([(hx,hy) for hx,hy in self.edge_adj_hexes(x,y) 
-					if self.board[hy][hx] is not None and 'init' in self.board[hy][hx] and not self.board[hy][hx]['init']]) == 0:
+				if initial_phase and all(self.board[hy][hx] is None or 'init' not in self.board[hy][hx] or self.board[hy][hx]['init']
+					for hx,hy in self.edge_adj_hexes(x,y)):
 					return options
 				for ex,ey in self.edge_adj_edges(x,y):
 					edge = self.edges[ey][ex]
@@ -282,7 +284,7 @@ class Siedler:
 		self.edge_dim_y = self.height+1
 		self.edges =  [[None for x in range(self.edge_dim_x)] for y in range(self.edge_dim_y)] # [None]*k does not work in 2d
 		self.reward_discovery = scenario['reward_discovery']
-		self.reward_colony = scenario['reward_colony']
+		self.reward_island = scenario['reward_island']
 		self.vp_limit = scenario['vp_limit']
 
 		robber_options = []
@@ -316,8 +318,8 @@ class Siedler:
 		colonies = 0
 		def dfs_reward(x,y,idx):
 			if self.board[y][x] is None or self.board[y][x]['terrain'] == 'water': return
-			if 'colony' not in self.board[y][x] and 'reward' in self.board[y][x] and self.board[y][x]['reward']:
-				self.board[y][x]['colony'] = idx
+			if 'island' not in self.board[y][x] and 'reward' in self.board[y][x] and self.board[y][x]['reward']:
+				self.board[y][x]['island'] = idx
 				for hx,hy in self.hex_adj_hexes(x,y):
 					dfs_reward(hx,hy,idx)
 
@@ -345,8 +347,8 @@ class Siedler:
 		# move adjacent 6 and 8
 		def n(x,y):
 			return self.board[y][x]['number'] if self.board[y][x] is not None and 'number' in self.board[y][x] else None
-		def is_option(x,y): 
-			return len([ 1 for hx,hy in self.hex_adj_hexes(x,y) if n(hx,hy) in [6,8]]) == 0 and not self.board[y][x]['terrain'] == 'river'
+		def is_option(x,y):
+			return all(n(hx,hy) not in [6,8] for hx,hy in self.hex_adj_hexes(x,y)) and self.board[y][x]['terrain'] != 'river'
 
 		options = { (x,y) for y in range(self.height) for x in range(self.width) if n(x,y) not in [None,6,8] and is_option(x,y) }
 		problems = [ (x,y) for y in range(self.height) for x in range(self.width) if n(x,y) in [6,8] and not is_option(x,y) ]
@@ -359,6 +361,7 @@ class Siedler:
 				self.board[y][x]['number'], self.board[sy][sx]['number'] = self.board[sy][sx]['number'], self.board[y][x]['number']
 				options -= {(sx,sy)} | set(self.hex_adj_hexes(sx,sy))
 				options |= { (ox,oy) for ox,oy in set(self.hex_adj_hexes(x,y)) if n(ox,oy) not in [None,6,8] and is_option(ox,oy) }
+
 
 	def describe(self):
 		return { 
@@ -387,6 +390,7 @@ class Siedler:
 				'knights' : 'gold' if self.largest_army == idx else None
 			}
 		}
+
 
 	async def update_index2id(self):
 		idx2id = { i:p.id for i,p in enumerate(self.players) }
@@ -422,12 +426,12 @@ class Siedler:
 						if (x,y) in self.edge_adj_edges(ex, ey):
 							self.active_player.harbors.append(self.board[hy][hx]['harbor']['type'])
 
-					if 'colony' in self.board[hy][hx] and self.board[hy][hx]['colony'] not in self.active_player.colonies:
+					if 'island' in self.board[hy][hx] and self.board[hy][hx]['island'] not in self.active_player.colonies:
 						if not self.initial_phase:
-							self.active_player.vp += self.reward_colony
-							text = f"<div class='icon resources'></div><br />{self.active_player.name} has settled on a new colony. <b>+{self.reward_colony} VP</b>"
+							self.active_player.vp += self.reward_island
+							text = f"<div class='icon resources'></div><br />{self.active_player.name} has settled on a new island. <b>+{self.reward_island} VP</b>"
 							await self.room.broadcast(dialog=text, title='Award', style='gold')
-						self.active_player.colonies.append(self.board[hy][hx]['colony'])
+						self.active_player.colonies.append(self.board[hy][hx]['island'])
 
 
 		if structure == 'ship':
@@ -487,13 +491,18 @@ class Siedler:
 	# called by server.py
 
 	async def move(self, user, action, **kwargs):
-		# check if move was initiated by active player
+		# check if all players are present:
+		if any(player.id not in self.room.members for player in self.players):
+			await user.receive(alert='Please wait until all players are logged in.')
+			return
+
+		# check if move was initiated by active player:
 		if user.id != self.active_player.id: 
 			await user.receive(alert='Dude, it is not your turn.')
 			return
 
 		if len(self.queue) == 0:
-			await user.receive(alert=f'Game has finished.')
+			await user.receive(alert='Game has finished.')
 			return
 
 		todo = self.queue.pop() # dict containing: func, expected, description, player
@@ -675,6 +684,7 @@ class Siedler:
 				self.queue.append(dict(player=args['opponent'], func=self.trade, expected='exchange', description=f'Make a counteroffer to {self.active_player.name}.',
 					setup=neg(kwargs['resources']), opponent=self.active_idx ))
 
+
 	async def free_build(self, args, x, y, structure):
 		expected = args['what']
 
@@ -693,6 +703,7 @@ class Siedler:
 			await self.active_player.store()
 
 		self.active_player.figures[structure] -= 1 # no testing needed so far
+
 
 	async def robber_loot(self, args, resources):
 		lose = self.active_player.storage_size() // 2
@@ -729,8 +740,6 @@ class Siedler:
 
 
 	async def robber_steal(self, args, player):
-		# todo: make sure player is in args['clickables']
-
 		if player not in args['clickables']:
 			raise GameError('Attempted to be naughty!')
 
@@ -774,6 +783,7 @@ class Siedler:
 
 
 	# development cards:
+
 	async def card_knight(self):
 		self.queue.append(dict(player=self.active_idx, func=self.robber_place, expected='robber', description='Place robber.'))
 		self.active_player.knights += 1
@@ -815,12 +825,13 @@ class Siedler:
 			self.queue.append(dict(func=self.card_roads, amount=amount, what=['road','ship'], expected='build', description='Build road or ship.'))
 		return True
 
+
 	async def card_plenty(self):
 		self.pick_resources(self.active_idx, 2, 'Pick 2 resources')
 		return True
 
 
-	# queue responders:
+	# queue responder:
 	async def monopoly_steal(self, args, resource):
 		for i,p in enumerate(self.players):
 			if i == self.active_idx: continue

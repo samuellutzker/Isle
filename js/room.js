@@ -23,7 +23,7 @@ class Room {
     enter() {
         $("#room").attr('title', `Room ${this.#roomName}`);
         $("body").addClass("logged-in");
-        $(window).on('resize', () => {
+        $(window).on('resize.room', () => {
             for (let i in this.#users)
                 this.#users[i].adjustPos();
         });
@@ -31,7 +31,7 @@ class Room {
     }
 
     exit() {
-        $(window).off('resize');
+        $(window).off('.room');
         Server.query({ do: "exit" });
         for (let i in this.#users) {
             this.#users[i].remove();

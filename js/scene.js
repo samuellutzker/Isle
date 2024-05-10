@@ -1,7 +1,7 @@
 'use strict';
 
-// improve hard coding for edgeToWorld, onBoard
-// upon hiding order gets changed, problems with transparency
+// improve hard coding for edgeToWorld, onBoard etc.
+// upon hiding objects, queue order gets changed => problems with transparency in Editor
 
 var debug;
 
@@ -63,7 +63,7 @@ class Scene {
 			down: null,
 			autoTilt: true
 		};
-		['scr','last','pos','world','closest','tilt','shift','board','cursor'].forEach((i) => this.mouse[i] = { x: 0, y: 0});
+		['scr','last','pos','world','closest','tilt','shift','board','cursor'].forEach((i) => this.mouse[i] = { x: 0, y: 0 });
 
 		const h = ModelMaker.hexagon();
 		this.edges = [
@@ -106,9 +106,9 @@ class Scene {
 	}
 
 	clearEvents() {
-		$(document).off('touchstart mouseover');
-		$(window).off('resize pointermove wheel pointerout pointerover pointerup');
-		$(this.canvas).off('click dblclick pointerdown pointerup pointermove pointerout pointercancel');
+		$(document).off('.scene');
+		$(window).off('.scene');
+		$(this.canvas).off('.scene');
 	}
 
 	onResize() {
@@ -385,7 +385,7 @@ class Scene {
 			// village / city / road
 			if (this.mouse.cursor.x != this.mouse.board.x || this.mouse.cursor.y != this.mouse.board.y) {
 				for (; this.mouse.numCursors > 0; --this.mouse.numCursors)
-					this.remove('cursor'); // , this.mouse.cursor.x, this.mouse.cursor.y);
+					this.remove('cursor');
 
 				if (!this.mouse.cursorOn) return;
 
@@ -398,7 +398,7 @@ class Scene {
 						Scene.nameToRgba("transparent"), [0.2, 0],
 						this.mouse.isEdge && !Scene.isCrossing(this.mouse.board.x, this.mouse.board.y) 
 						? mat4.fromZRotation(mat4.create(), Scene.roadRotation(this.mouse.board.x)) : null,
-						null, null, 'cursor', // this.mouse.board.x, this.mouse.board.y, 'cursor', 
+						null, null, 'cursor',
 						i == 0 ? this.remove(this.mouse.cursorType, this.mouse.cursor.x, this.mouse.cursor.y) : null);
 				}
 				this.mouse.numCursors = options.length;
@@ -418,12 +418,12 @@ class Scene {
 
 	setupLights(gl) {
 		// Position and lights
-		this.backlight = new Light(gl, [0.15,0.15,0.15], [0.35,0.35,0.35], [0.15,0.15,0.15]);
+		this.backlight = new Light(gl, [0.15,0.15,0.15], [0.45,0.45,0.45], [0.15,0.15,0.15]);
 		this.backlight.turn(gl, [0.0, -0.3, 1.0], this.shader);
 
-		this.lamp = new Light(gl, [0.05,0.05,0.05], [0.6,0.6,0.6], [0.35,0.35,0.35], 1.0, 0.02, 0.0032, -1.0);
+		this.lamp = new Light(gl, [0.0,0.0,0.0], [0.65,0.65,0.65], [0.35,0.35,0.35], 1.0, 0.02, 0.0032, -1.0);
 
-		this.flashlight = new Light(gl, [0.0,0.0,0.0],[0.9,0.9,0.9], [0.9,0.9,0.9], 3.0, 0.001, 0.00016, Math.cos(12.5*Math.PI/180.0));
+		this.flashlight = new Light(gl, [0.0,0.0,0.0],[0.9,0.9,0.9], [0.1,0.1,0.1], 3.0, 0.001, 0.00016, Math.cos(12.5*Math.PI/180.0));
 	}
 
 	placeFigure(figure, x, y, isEditor) {
@@ -497,7 +497,7 @@ class Scene {
 		const maxSpeed = 0.3;
 		const closeDist = 1.3, farDist = 20.0;
 
-		$(window).on('resize', this.onResize.bind(this));
+		$(window).on('resize.scene', this.onResize.bind(this));
 
 		// Pointer controls:
 		const updateTilt = () => {
@@ -508,7 +508,7 @@ class Scene {
 
 		// hybrid device hack:
 		var touched = false, touchTimer = null;
-		$(document).on('touchstart', () => {
+		$(document).on('touchstart.scene', () => {
 			if (!this.mouse.isTouch) {
 				this.mouse.isTouch = true;
 				this.clearEvents();
@@ -518,7 +518,7 @@ class Scene {
 			touched = true;
 			touchTimer = setTimeout(() => touched = false, 500);
 
-		}).on('mouseover', () => {
+		}).on('mouseover.scene', () => {
 			if (!touched && this.mouse.isTouch) {
 				this.mouse.isTouch = false;
 				this.clearEvents();
@@ -530,15 +530,15 @@ class Scene {
 
 			// Mouse events
 
-			$(this.canvas).on('dblclick', (e) => {
+			$(this.canvas).on('dblclick.scene', (e) => {
 				this.mouse.autoTilt = !this.mouse.autoTilt;
 
-			}).on('pointerdown', (e) => {
+			}).on('pointerdown.scene', (e) => {
 				this.mouse.down = this.mouse.pos = this.mouse.last = normalizeMouse(e);
 
 			});
 
-	    	$(window).on('pointermove', (e) => {
+	    	$(window).on('pointermove.scene', (e) => {
 				this.mouse.pos = normalizeMouse(e);
 				this.mouse.scr = { x: e.clientX, y: e.clientY };
 
@@ -548,12 +548,12 @@ class Scene {
 				this.mouse.last = this.mouse.pos;
 				this.viewRefresh = true;
 
-			}).on('wheel', (e) => {
+			}).on('wheel.scene', (e) => {
 				const speed = Math.max(Math.min(e.originalEvent.wheelDelta / 100.0, maxSpeed), -maxSpeed);
 				this.cam.dist = Math.max(Math.min(this.cam.dist + speed, farDist), closeDist);
 				this.viewRefresh = true;
 
-	    	}).on('pointerup', (e) => {
+	    	}).on('pointerup.scene', (e) => {
 	    		if (!this.mouse.down)
 	    			return;
 				const diff = { x: this.mouse.pos.x - this.mouse.down.x, y: this.mouse.pos.y - this.mouse.down.y };
@@ -562,11 +562,11 @@ class Scene {
 				}
 				this.mouse.down = null;
 
-			}).on('pointerout', () => { 
+			}).on('pointerout.scene', () => { 
 		    	this.mouse.over = false; 
 				this.viewRefresh = true;
 
-		    }).on('pointerover', () => this.mouse.over = true);
+		    }).on('pointerover.scene', () => this.mouse.over = true);
 
 		} else {
 
@@ -588,13 +588,13 @@ class Scene {
 				} else return normalizeMouse(this.mouse.evt[0]);
 			};
 
-			$(this.canvas).on('pointerdown', (e) => { 
+			$(this.canvas).on('pointerdown.scene', (e) => { 
 				this.mouse.evt.push(e);
 				this.mouse.down = this.mouse.last = this.mouse.pos = normalizeMouse(e);
 				this.viewRefresh = true;
 				this.mouse.cursorOn = false;
 
-			}).on('pointermove', (e) => {
+			}).on('pointermove.scene', (e) => {
 				if (this.mouse.evt.length == 2) {
 					// 2 fingers are touching
 					this.mouse.evt[idx(e)] = e;
@@ -619,7 +619,7 @@ class Scene {
 				this.mouse.last = this.mouse.pos;
 				this.viewRefresh = true;
 
-			}).on('pointerup pointerout pointercancel', (e) => {
+			}).on('pointerup.scene pointerout.scene pointercancel.scene', (e) => {
 				const diff = { x: this.mouse.pos.x - this.mouse.down.x, y: this.mouse.pos.y - this.mouse.down.y };
 				this.mouse.evt.splice(idx(e), 1);
 				if (this.mouse.evt.length == 1) {

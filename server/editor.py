@@ -10,7 +10,7 @@ class Editor:
 		self.shift_y = 0
 		self.vp_limit = 10
 		self.reward_discovery = True
-		self.reward_colony = 2
+		self.reward_island = 2
 		self.board = [[]]
 		self.robber = []
 		self.pirate = []

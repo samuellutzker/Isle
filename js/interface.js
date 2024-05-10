@@ -5,12 +5,19 @@ class Interface {
     #room;
     #scenarios;
 
+    static isFullscreen() {
+        return document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen;
+    }
+
     #leaveRoom() {
         if (this.#room) {
             this.#videoOn(false);
             this.#room.exit();
             this.#room = null;
             Server.setHandlers(null, async () => {});
+            if (Interface.isFullscreen()) {
+                document.exitFullscreen();
+            }
         }
     }
 
@@ -177,8 +184,7 @@ class Interface {
         $("#checkbox_fullscreen").change(this.checkboxFullscreen.bind(this));
 
         $("#main").on('mozfullscreenchange webkitfullscreenchange fullscreenchange', () => {
-            const fullscreen = document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen;
-            $("#checkbox_fullscreen").prop('checked', fullscreen ? 'checked' : '');
+            $("#checkbox_fullscreen").prop('checked', Interface.isFullscreen() ? 'checked' : '');
         });
 
         if (!$("#main")[0].requestFullscreen) {

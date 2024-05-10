@@ -1,7 +1,6 @@
 'use strict';
 
 // Next:
-// Shrink board upon delete
 // Set author, text
 
 class Editor {
@@ -144,7 +143,7 @@ class Editor {
 			<input type="checkbox" onchange="if (!this.checked) $('#checkbox_terrain_hidden').prop('checked', '')" id="checkbox_terrain_init" />
 			<label for="checkbox_terrain_init"></label></p>`;
 
-		html += `<p id='terrain_reward'><span class='custom-label'>VP reward for colony</span>
+		html += `<p id='terrain_reward'><span class='custom-label'>VP reward for island</span>
 			<input type="checkbox" id="checkbox_terrain_reward" />
 			<label for="checkbox_terrain_reward"></label></p>`;
 
@@ -384,8 +383,8 @@ class Editor {
 				<input type="checkbox" id="checkbox_reward_terrain" ${this.situation['reward_discovery'] ? 'checked' : ''} />
 				<label for="checkbox_reward_terrain"></label>
 
-				<p><label for="input_colony_bonus">Bonus VP for new colony</label>
-				<input type="number" min=0 value=${this.situation['reward_colony']} max=99 id="input_colony_bonus" /></p>`;
+				<p><label for="input_island_bonus">Bonus VP for new island</label>
+				<input type="number" min=0 value=${this.situation['reward_island']} max=99 id="input_island_bonus" /></p>`;
 
 			dialog('Save', html, { "OK" : this.save, "Cancel" : null });
 		}).appendTo($container);
@@ -398,7 +397,7 @@ class Editor {
 			name: scenario, 
 			vp_limit: parseFloat($("#dlg_save_vp").val()),
 			reward_discovery: $("#checkbox_reward_terrain").is(":checked"),
-			reward_colony: parseFloat($("#input_colony_bonus").val())
+			reward_island: parseFloat($("#input_island_bonus").val())
 		}})
 	}
 
