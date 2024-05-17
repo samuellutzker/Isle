@@ -1,11 +1,11 @@
 'use strict';
 
 class Server {
-    static #url;
-    static #socket;
-    static #message = async () => {};
-    static #close = async () => {};
-    static #failed = []; // buffered messages
+    static #url; // WebSocket URL
+    static #socket; // WebSocket object
+    static #message = async () => {}; // onMessage handler
+    static #close = async () => {}; // onClose handler
+    static #failed = []; // buffered queries during connection problem
 
     static setHandlers(message, close) {
         this.#message = message ?? this.#message;

@@ -4,19 +4,6 @@
 // Set author, text
 
 class Editor {
-	canvas; // WebGL Canvas
-	scene;
-	hex; // Current element in detail
-	selected; // Current element as string
-	situation; // Scenario data
-	isRunning;
-	isRobber;
-	shift; // The center of the board
-	pileIdx; // The current pile (1,2,3,4,fixed)
-	available; // Available tiles
-	placed; // Placed tiles
-	dlgSetting;
-
 	static start(scenario) {
 		Server.query({ do: 'new_editor', scenario: scenario });
 	}
@@ -24,6 +11,19 @@ class Editor {
 	static delete(scenario) {
 		Server.query({ do: 'delete_scenario', scenario: scenario });
 	}
+
+	isRunning;
+	isRobberMode;
+	canvas;
+	scene;
+	hex; // Current element in detail
+	selected; // Current element as string
+	situation; // Scenario data
+	shift; // The center of the board
+	pileIdx; // The current pile (1,2,3,4,fixed)
+	available; // Number of available tiles
+	placed; // Number of placed tiles
+	dlgSetting; // Memory of dialog box
 
 	constructor() {
 		$("body").addClass("playing");
@@ -34,7 +34,7 @@ class Editor {
 		this.situation = {};
 		this.waterCursor();
 
-		this.isRobber = false;
+		this.isRobberMode = false;
 		this.pileIdx = 0;
 		this.available = null;
 		this.placed = {};
@@ -46,17 +46,17 @@ class Editor {
 		this.scene.setClickables([ 'water' ]);
 		this.hex = { terrain: 'water' };
 		this.selected = 'water';
-		this.isRobber = false;
+		this.isRobberMode = false;
 	}
 
 	robberCursor() {
-		if (this.isRobber) {
+		if (this.isRobberMode) {
 			this.waterCursor();
 			return;
 		}
 		this.scene.remove('cursor');
 		this.scene.setCursor('robber', true);
-		this.isRobber = true;
+		this.isRobberMode = true;
 	}
 
 	setHex(hex, x, y, remove) {
@@ -81,7 +81,7 @@ class Editor {
 
 			case 'hex' :
 				const placed = this.setHex(obj.hex, obj.x, obj.y);
-				if (!this.robber && this.available !== null && placed >= this.available) {
+				if (!this.isRobberMode && this.available !== null && placed >= this.available) {
 					// used up all chips
 					this.waterCursor();
 				}
@@ -108,7 +108,7 @@ class Editor {
 	}
 
 	onClick(boardPos, scrPos) {
-		if (this.isRobber) {
+		if (this.isRobberMode) {
 			Server.query({
 				do: 'editor', what: { action: 'robber', ...boardPos }
 			});
@@ -134,7 +134,7 @@ class Editor {
 
 		html += `<p id='available_tiles' style='font-weight: bold'></p>`;
 
-		// checkbox options
+		// checkbox options:
 		html += `<p id='terrain_hidden'><span class='custom-label'>Hidden Pile (discover during game)</span>
 			<input type="checkbox" onchange="if (this.checked) $('#checkbox_terrain_init').prop('checked', 'checked')" id="checkbox_terrain_hidden" />
 			<label for="checkbox_terrain_hidden"></label>`;
@@ -262,7 +262,7 @@ class Editor {
 			const cursor = this.selected == 'random' ? this.hex : this.selected;
 			this.scene.setCursor('hex', false, false);
 			this.scene.setClickables([ cursor ]); // Cursor
-			this.isRobber = false;
+			this.isRobberMode = false;
 
 			const available = $("#available_tiles").data('available') ?? 1;
 			if (available <= 0) {
@@ -412,7 +412,7 @@ class Editor {
 	}
 
 	async run(situation) {
-		if (this.isRunning) // Only once (maybe not necessary)
+		if (this.isRunning)
 			return;
 
 		this.isRunning = true;
@@ -447,12 +447,13 @@ class Editor {
 			}
 		}
 
-		for (let y in situation.board)
+		for (let y in situation.board) {
 			for (let x in situation.board[y]) {
 				if (situation.board[y][x]) 
 					this.setHex(situation.board[y][x], Number(x)-situation.shift_x, Number(y)-situation.shift_y);
 				else
 					this.scene.placeHex({terrain: 'hidden'}, Number(x)-situation.shift_x, Number(y)-situation.shift_y, Scene.nameToRgba("transparent"), [0.8, 0]);
 			}
+		}
 	}
 }

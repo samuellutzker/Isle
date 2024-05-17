@@ -1,7 +1,7 @@
 'use strict';
 
 class Room {
-    #users;
+    #users; // id -> class User
     #roomName;
     #myName;
     #ok;

@@ -1,14 +1,10 @@
 'use strict';
 
-// Every reference to a player in Siedler should be the index. Create a 'ghost' person if a player signed out.
-// consistent name of sticky cursor (clickables, clickable, cursor)
-
-
 class Siedler {
+	static isSoundOn = true;
+	static sounds = {};
 	static terrains = [ 'water', 'mountains', 'hills', 'forest', 'pasture', 'fields', 'desert', 'river' ]; 
 	static resources = [ 'lumber', 'brick', 'wool', 'grain', 'ore' ];
-	static sounds = {};
-	static playSounds = true;
 
 	static audioPreload(audioFiles) {
 		audioFiles.forEach((f) => this.sounds[f] = new Audio(`sounds/${f}.mp3`));
@@ -23,22 +19,23 @@ class Siedler {
 	}
 
 	static audio(on) {
-		this.playSounds = on;
+		this.isSoundOn = on;
 	}
 
 	static sound(event) {
-		if (event in this.sounds && this.playSounds)
+		if (event in this.sounds && this.isSoundOn)
 			this.sounds[event].play();
 	}
 
+	isRunning;
+	isRobberMode;
 	scene;
-	running; // Flag
-	canvas; // WebGL Canvas
+	canvas;
 	players; // id -> class Person
 	activeId; // id of active player
 	storage; // resources in storage
 	storageDlg; // current setting in resources dialog
-	sounds;
+	idx2id; // player index => player id
 
 	constructor(players) {
 		$("body").addClass("playing");
@@ -240,10 +237,10 @@ class Siedler {
 	}
 
 	async run(situation) {
-		if (this.running) // Only once (maybe not necessary)
+		if (this.isRunning)
 			return;
 
-		this.running = true;
+		this.isRunning = true;
 
 		this.activeId = situation.active;
 		if (this.players[this.activeId]) {
@@ -259,7 +256,7 @@ class Siedler {
 		this.setupBoard(situation);
 
 		const render = (now) => {
-			if (!this.running || !this.scene)
+			if (!this.isRunning || !this.scene)
 				return;
 			this.scene.draw();
 			requestAnimationFrame(render);		
@@ -269,7 +266,7 @@ class Siedler {
 
 
 	onClick(boardPos, scrPos) {
-		if (this.robberMode) {
+		if (this.isRobberMode) {
 
 			Server.query({ do: 'game', what: {...boardPos, action: 'robber' } });
 
@@ -326,7 +323,7 @@ class Siedler {
 		if (this.scene)
 			this.scene.clearEvents();
 		this.scene = null;
-		this.running = false;
+		this.isRunning = false;
 		$("#siedler_board").remove();
 		$("body").removeClass("playing");
 		message(false, '');
@@ -478,6 +475,6 @@ class Siedler {
 
 	moveRobber(yes) {
 		yes ? this.scene.setCursor('robber', true) : this.scene.setCursor('structure', false, true);
-		this.robberMode = yes;
+		this.isRobberMode = yes;
 	}
 }

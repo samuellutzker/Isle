@@ -3,8 +3,6 @@
 // improve hard coding for edgeToWorld, onBoard etc.
 // upon hiding objects, queue order gets changed => problems with transparency in Editor
 
-var debug;
-
 class Scene {
 	static roadRotation(x) {
 		if ((x % 5) == 0) return 0;
@@ -22,9 +20,11 @@ class Scene {
 	zNear = 0.1;
 	zFar = 100.0;
 
+	gl;
 	canvas;
 	shader;
 	projView; // ProjectMat * ViewMat
+	viewRefresh; // flag to mark necessary update of projView
 
 	models; // object: name -> class Model
 
@@ -34,16 +34,13 @@ class Scene {
 	flashlight;
 
 	edges; // hexagon edge coordinates
-	rgba; // rgba of color names
-
-	mouse; // positions
+	center; // the board's center
+	mouse; // huge object containing all necessary mouse info
 	queue; // drawing queue
-
-	clickables; // 2d array board-pos -> build option (depends on stickyEdge)
-
-	viewRefresh; // flag to mark necessary update of projView
-
+	edgeOnBoard; // lookup for edgeToBoard
+	clickables; // 2d array board-pos -> build options
 	doAction; // handler for clicks
+	rgba; // rgba of color names
 
 	constructor(canvas) {
 		this.canvas = canvas;
@@ -54,14 +51,14 @@ class Scene {
 		this.viewRefresh = true;
 		this.mouse = { 
 			isTouch: matchMedia('(hover: none), (pointer: coarse)').matches,
-			over: true, // mouse on screen
+			over: true, // mouse is on screen
 			cursorOn: matchMedia('(hover: none), (pointer: coarse)').matches, // show / hide cursor
-			numCursors: 0, // number of cursors
-			isEdge: true, // board and world refer to edge coordinates
-			evt: [],
-			pinch: null,
-			down: null,
-			autoTilt: true
+			numCursors: 0,
+			isEdge: true, // board and world are edge coordinates
+			evt: [], // touch event buffer
+			pinch: null, // two fingers on touch screen
+			down: null, // position of mouse button pressed
+			autoTilt: true // change view angle according to position
 		};
 		['scr','last','pos','world','closest','tilt','shift','board','cursor'].forEach((i) => this.mouse[i] = { x: 0, y: 0 });
 
@@ -698,7 +695,7 @@ class Scene {
 		    context.fillRect(0,0,1,1);
 		    this.rgba[name] = Array.from(context.getImageData(0,0,1,1).data).map((v) => v / 255.0);
 		}
-	    return this.rgba[name];
+		return this.rgba[name];
 	}
 
 }

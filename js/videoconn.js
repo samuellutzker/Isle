@@ -3,10 +3,11 @@
 class VideoConn {
 
     static on = 0;
-    static #all = {};
-    static #localStream;
-    static #localVideo;
+    static #all = {}; // userId -> class VideoConn
+    static #localStream; // user media
+    static #localVideo; // video tag
 
+    // RTCPeerConnection configuration:
     static #mediaConstraints = {
         video: { 
             mandatory: { 
@@ -255,10 +256,12 @@ class VideoConn {
                 console.error(`VideoConn: Connection problem with user ${this.#id}. Reattempting in ${reconnectTimeout}s`);
                 setTimeout(this.#reconnect.bind(this), reconnectTimeout * 1000);
                 break;
+
             case "closed":
                 console.error(`VideoConn: Connection closed with user ${this.#id}. Reconnecting.`);
                 this.#reconnect();
                 break;
+
             default:
                 // Handle other states as needed
                 break;

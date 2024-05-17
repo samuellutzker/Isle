@@ -31,7 +31,8 @@ const makeMovable = (what, callbackNewPos) => {
 	$(what).addClass('movable').on('pointerdown', f);
 };
 
-
+// prevent: intercepts all these events (string seperated by ' ')
+// filter: intercepts these events, except those on children of the classes in except
 const intercept = function (prevent, filter, except) {
 	if (intercept.args) {
 		intercept.args.prevent.forEach((x) => window.removeEventListener(x, intercept.preventEvents, true));
