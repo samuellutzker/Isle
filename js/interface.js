@@ -1,13 +1,12 @@
 'use strict';
 
 class Interface {
-
-    #room;
-    #scenarios;
-
     static isFullscreen() {
         return document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen;
     }
+
+    #room;
+    #scenarios;
 
     #leaveRoom() {
         if (this.#room) {
@@ -43,7 +42,7 @@ class Interface {
         }
     }
 
-    dlgAbout() {
+    btnAbout() {
         const html = `<h1>Thanks for stopping by!</h1>
             <p>This implementation of the base game and Seafarers extension of Catan by Klaus Teuber was programmed by Sam Lutzker in 2023/24, 
             for private, non-commercial use only.</p>
@@ -53,10 +52,10 @@ class Interface {
             "Close" : null, 
             "Prices" : () => dialog("Building Prices", $("#info").html(), null, null, 'wide'), 
             "Rules" : () => dialog("Open Rules", "<p>Display the rules of Catan base game, or the seafarer extension?</p>", {
-                    "Cancel" : null,
-                    "Base" : () => window.open('rules/rules_catan_base_2020.pdf'),
-                    "Seafarers" : () => window.open('rules/rules_catan_seafarers_2021.pdf')
-                })
+                "Cancel" : null,
+                "Base" : () => window.open('rules/rules_catan_base_2020.pdf'),
+                "Seafarers" : () => window.open('rules/rules_catan_seafarers_2021.pdf')
+            })
         }, null, 'wide');
     }
 
@@ -80,7 +79,8 @@ class Interface {
                     leave(); 
                 }, 
                 "Stop" : Siedler.stop,
-                "Cancel" : null }, null, 'wide');
+                "Cancel" : null
+            }, null, 'wide');
         } else {
             leave();
         }
@@ -113,10 +113,6 @@ class Interface {
         } else {
             start();
         }
-    }
-
-    addScenario(name) {
-        this.#scenarios.push(name);
     }
 
     async checkboxVideo() {
@@ -174,7 +170,7 @@ class Interface {
                 this.#hideMenu();
         });
 
-        $("#logo, #btn_about").click(this.dlgAbout.bind(this));
+        $("#logo, #btn_about").click(this.btnAbout.bind(this));
         $("#btn_game").click(this.btnGame.bind(this));
         $("#btn_exit").click(this.btnExit.bind(this));
         $("#form_enter").submit(this.formEnter.bind(this));

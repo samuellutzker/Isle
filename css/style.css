@@ -159,12 +159,11 @@ body.playing input[type=checkbox]#checkbox_controls:checked ~ div#room {
 }
 
 div#controls input[type=text] {
-    width: 15em;
+    width: 15.5em;
 }
 
 label, span.custom-label {
-    font-size: 0.8em;
-    font-weight: bold;
+    font-size: 0.9em;
 }
 
 

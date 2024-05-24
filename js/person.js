@@ -156,16 +156,9 @@ class Person {
 
     #setColor(color) {
         const whiteThreshold = 0.75;
-            // .find('.face, .nametag')
-            // .css('background-color', color).end()
-            // .find('.body, .halo')
-            // .css('border-color', color);
-
 
         const textColor = (Math.min.apply(null, Scene.nameToRgba(color)) > whiteThreshold) ? "black" : "white";
         this.$el.css('--player-color', color).css("--player-text-color", textColor);
-
-        // .css("color", textColor).find(".nametag").css("color", textColor);
     }
 
 
@@ -232,7 +225,7 @@ class Person {
 
     #connectVideo() {
         if (this.#videoConn === undefined) {
-            this.#videoConn = new VideoConn(this.#id, this.$el.find(".face"), (msg) => this.update({ do: 'chat', msg: '<b>[DM]</b> &laquo;' + msg + '&raquo;' }));
+            this.#videoConn = new VideoConn(this.#id, this.$el.find(".face"), (msg) => this.update({ do: "chat", msg: "<b>[DM]</b> &laquo;" + msg + "&raquo;" }));
         }
     }
 

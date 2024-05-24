@@ -31,7 +31,7 @@ class Room:
         if to is None:
             await self.broadcast(**msg)
         elif to not in self.members:
-            log(f'Attempted to contact someone outside of the room, id: {to}.')
+            log(f'Attempted to contact someone with id {to} outside of the room.')
         elif self.members[to].alive:
             try:
                 await self.members[to].socket.send(json.dumps(msg))
@@ -85,6 +85,8 @@ class Room:
         # broadcast that i've joined
         await self.broadcast(user.id, at='room', do='add_user', id=user.id, name=user.name, x=user.x, y=user.y, status=user.msg, color=user.color)
 
+        log(f'User {user.name} entered room {self.name}.')
+
         if self.game is not None:
             if self.is_editor:
                 await user.receive(at='room', do='editor', show=True)
@@ -108,6 +110,8 @@ class Room:
 
         self.members.pop(user.id)
         user.room = None
+
+        log(f'User {user.name} left room {self.name}.')
 
         if len(self.members) == 0:
             if self.game is None:
@@ -163,6 +167,7 @@ class Room:
             self.game = None
             await self.broadcast(at='room', do='editor' if self.is_editor else 'game', show=False)
             await self.broadcast(dialog='Editor was quit.' if self.is_editor else 'Game was quit.')
+            log(('Editor' if self.is_editor else 'Game') + f' was quit in room {self.name}.')
 
     def remove(self):
         Room.all.pop(self.name)

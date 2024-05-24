@@ -4,6 +4,10 @@
 // upon hiding objects, queue order gets changed => problems with transparency in Editor
 
 class Scene {
+	static tan30 = Math.tan(Math.PI / 6.0);
+	static tileHeight = (this.tan30 + Math.sqrt(1.0 + this.tan30 * this.tan30)) / 2.0;
+	static rgba = {}; // name -> [R,G,B,A]
+
 	static roadRotation(x) {
 		if ((x % 5) == 0) return 0;
 		return (x % 5) > 2 ? (2 * Math.PI / 3) : (Math.PI / 3);
@@ -13,8 +17,16 @@ class Scene {
 		return (x % 5) % 2 == 1;
 	}
 
-	static tan30 = Math.tan(Math.PI / 6.0);
-	static tileHeight = (this.tan30 + Math.sqrt(1.0 + this.tan30 * this.tan30)) / 2.0;
+	static nameToRgba(name) {
+		if (!(name in this.rgba)) {
+		    var canvas = document.createElement('canvas');
+		    var context = canvas.getContext('2d');
+		    context.fillStyle = name;
+		    context.fillRect(0,0,1,1);
+		    this.rgba[name] = Array.from(context.getImageData(0,0,1,1).data).map((v) => v / 255.0);
+		}
+		return this.rgba[name];
+	}
 
 	fieldOfView = (45 * Math.PI) / 180;
 	zNear = 0.1;
@@ -24,9 +36,9 @@ class Scene {
 	canvas;
 	shader;
 	projView; // ProjectMat * ViewMat
-	viewRefresh; // flag to mark necessary update of projView
+	viewRefresh; // flag necessary update of projView
 
-	models; // object: name -> class Model
+	models; // name -> class Model
 
 	// lights:
 	backlight;
@@ -38,9 +50,8 @@ class Scene {
 	mouse; // huge object containing all necessary mouse info
 	queue; // drawing queue
 	edgeOnBoard; // lookup for edgeToBoard
-	clickables; // 2d array board-pos -> build options
+	clickables; // 2d board-pos -> build options
 	doAction; // handler for clicks
-	rgba; // rgba of color names
 
 	constructor(canvas) {
 		this.canvas = canvas;
@@ -52,7 +63,7 @@ class Scene {
 		this.mouse = { 
 			isTouch: matchMedia('(hover: none), (pointer: coarse)').matches,
 			over: true, // mouse is on screen
-			cursorOn: matchMedia('(hover: none), (pointer: coarse)').matches, // show / hide cursor
+			cursorOn: matchMedia('(hover: none), (pointer: coarse)').matches, // show or hide cursor
 			numCursors: 0,
 			isEdge: true, // board and world are edge coordinates
 			evt: [], // touch event buffer
@@ -684,18 +695,4 @@ class Scene {
 
 		this.models['triangle'] = new Model(gl, ModelMaker.triangle.idx, ModelMaker.triangle.pos, ModelMaker.triangle.tex, ModelMaker.triangle.norm, 'images/empty.png', 'images/empty.png', 0.33);
 	}
-
-	static nameToRgba(name) {
-		if (!this.rgba)
-			this.rgba = {};
-		if (!(name in this.rgba)) {
-		    var canvas = document.createElement('canvas');
-		    var context = canvas.getContext('2d');
-		    context.fillStyle = name;
-		    context.fillRect(0,0,1,1);
-		    this.rgba[name] = Array.from(context.getImageData(0,0,1,1).data).map((v) => v / 255.0);
-		}
-		return this.rgba[name];
-	}
-
 }
