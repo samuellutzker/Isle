@@ -7,8 +7,6 @@ class Room {
     #ok;
     #$myself;
     #game;
-    #active;
-    #linkArgs;
     #key;
 
     constructor(myName, roomName, key) {
@@ -17,7 +15,6 @@ class Room {
         this.#users = {};
         Person.removeAll();
         Server.query({ do: "enter", room: roomName, name: myName, key: key });
-        this.#active = null;
     }
 
     enter() {
@@ -73,7 +70,6 @@ class Room {
 
                 case 'active' :
                     this.#users[obj.id].setActive();
-                    this.#active = obj.id;
                     break;
 
                 case 'game_key' :

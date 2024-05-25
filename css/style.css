@@ -224,8 +224,10 @@ div.person.clickable div.halo {
 
 body:not(.playing) div.person.selected:not(.myself) div.halo, 
 div.person.clickable:hover div.halo {
-    /*background: var(--player-text-color);
-    color: var(--player-color);*/
+    /*
+    background: var(--player-text-color);
+    color: var(--player-color);
+    */
     background: white;
 }
 
@@ -317,7 +319,6 @@ div.person div.container {
     background-color: rgba(0,0,0,0.4);
     text-align: center;
     white-space: nowrap;
-    /* word-spacing: -1em; */
     border-color: inherit;
 }
 

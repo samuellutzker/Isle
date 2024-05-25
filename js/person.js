@@ -39,24 +39,21 @@ class Person {
         return { w: $c.width(), h: $(document).height() - $("#main").position().top };
     }
 
-    #name;
     #id;
-    #chat;
+    #name;
     #domId;
     #videoOn;
     #videoConn;
     #x;
     #y;
     #isMe;
-    #color;
 
     $el;
 
     constructor(id, name, color, isMe) {
         this.#id = id;
         this.#name = name;
-        this.#chat = null;
-        this.#domId = 'user_'+name;
+        this.#domId = 'user_'+id;
         this.#isMe = isMe;
         this.#show();
         this.#setColor(color);
@@ -126,7 +123,7 @@ class Person {
     #show() {
         const initial = this.#name.charAt(0);
         this.$el = $("<div class='person'></div>")
-            .prop('id', this.#id)
+            .prop('id', this.#domId)
             .html(`
                 <div class='halo'>
                     <div class='face'></div>
