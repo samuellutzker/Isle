@@ -74,7 +74,9 @@ class Person {
 
             this.$el
                 .find(".halo").append(`<div class='emojiselect'>${emojis}</div>`)
-                .find(".face").click(function (e) {
+                .find(".face").click((e) => {
+                    if (this.#videoOn)
+                        return;
                     $(".emojiselect").show();
                     const f = () => {
                         $(".emojiselect").hide();

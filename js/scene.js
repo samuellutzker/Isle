@@ -120,17 +120,21 @@ class Scene {
 	}
 
 	onResize() {
-		const $canvas = $(this.canvas);
-		$canvas
-			.prop('width', $canvas.width())
-			.prop('height', $canvas.height())
+	    const dpr = window.devicePixelRatio;
+      	let {width, height} = this.canvas.getBoundingClientRect();
+      	width *= dpr; 
+      	height *= dpr;
+
+		$(this.canvas)
+			.prop('width', width)
+			.prop('height', height)
 			.css('background-color', 'gray');
 		this.gl = this.canvas.getContext("webgl2");
 		if (this.gl === null) {
 			alert('WebGL2 is not supported.');
 			return;
 		}
-		this.gl.viewport(0, 0, $canvas.width(), $canvas.height());
+		this.gl.viewport(0, 0, width, height);
 		this.viewRefresh = true;
 	}
 

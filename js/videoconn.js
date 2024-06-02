@@ -74,7 +74,7 @@ class VideoConn {
     static stop() {
         if (VideoConn.#localVideo && VideoConn.#localStream) {
             this.on = 0;
-            $("#myvid").parent().removeClass('video').end().remove();
+            $(".myself").removeClass('video').find('video').remove();
             VideoConn.#localVideo.srcObject = null;
             VideoConn.#localStream.getTracks().forEach((track) => { 
                 track.stop(); 
@@ -89,19 +89,24 @@ class VideoConn {
         }
     }
 
-    active = false;
+    active;
 
     #id;
     #pc; // RTCPeerConnection
     #dc; // RTCDataChannel
+    #ping; // RTCDataChannel
+    #pingTimer; // for ping-pong clearTimeout
+    #isAlive; // ping-pong ok
     #remoteStream;
     #remoteVideo;
     #dataCallback;
-    #isInitiator = false;
+    #isInitiator; // is active part of reconnect process
 
     constructor(id, videoTagContainer, dataCallback) {
         let $video = $("<video id='video_user_"+id+"' playsinline autoplay></video>").appendTo(videoTagContainer);
 
+        this.active = false;
+        this.#isInitiator = false;
         this.#id = id;
         this.#remoteVideo = $video[0];
         this.#dataCallback = dataCallback;
@@ -113,11 +118,14 @@ class VideoConn {
             await this.#pc.setLocalDescription(await this.#pc.createOffer());
             this.#send(this.#pc.localDescription);
         }
+        this.#dataChannel({ label: 'chat', channel: this.#pc.createDataChannel('chat') });
+        this.#dataChannel({ label: 'ping', channel: this.#pc.createDataChannel('ping') });
         this.#isInitiator = true;
     }
 
     hangup() {
         this.#send({ type: 'bye' });
+        this.#isInitiator = false;
         this.#setActive(false);
     }
 
@@ -155,21 +163,56 @@ class VideoConn {
 
             case 'restart' :
                 console.log('VideoConn: received restart.');
+                // reconnect process: 
+                // 1) initiator sends restart after removing his connection
+                // 2) passive user sends restart after removing his connection
+                // 3) initiator calls
                 this.#setActive(false);
-                if (!this.#isInitiator)
+                if (this.#isInitiator)
                     this.call();
                 else
-                    this.#isInitiator = false;
+                    this.#send({ type: 'restart' });
                 break;
 
             case 'bye' :
                 // console.log('VideoConn: received bye.');
+                this.#isInitiator = false;
                 this.#setActive(false);
                 break;
 
             default :
                 console.error('VideoConn: undefined message type received.');
                 break;
+        }
+    }
+
+
+    #heartbeat() {
+        const heartbeatInterval = 500;
+
+        if (this.#isInitiator) {
+            if (!this.#pingTimer) {
+                if (this.#ping.readyState == 'open') {
+                    // console.log('ping');
+                    this.#ping.send('ping');
+                }
+                this.#isAlive = false;
+                this.#pingTimer = setTimeout(() => {
+                    if (!this.#isAlive) {
+                        console.log('VideoConn: Connection dead. Issuing restart.');
+                        this.#reconnect();
+                    }
+                    else {
+                        this.#pingTimer = null;
+                        this.#heartbeat();
+                    }
+                }, heartbeatInterval);
+            } else {
+                this.#isAlive = true;
+            }
+        } else {
+            // console.log('pong');
+            this.#ping.send('ping');
         }
     }
 
@@ -183,8 +226,6 @@ class VideoConn {
         VideoConn.#localStream.getTracks()
             .forEach((track) => pc.addTrack(track, VideoConn.#localStream));
 
-        this.#dc = pc.createDataChannel('chat');
-        this.#dc.onmessage              = this.#messageReceived.bind(this);
         this.#pc = pc;
     }
 
@@ -208,6 +249,9 @@ class VideoConn {
 
     // activate / deactivate video connection
     #setActive(state) {
+        if (state == this.active)
+            return;
+
         this.active = state;
         if (state) {
             VideoConn.#all[this.#id] = this;
@@ -227,26 +271,27 @@ class VideoConn {
                 this.#remoteVideo.srcObject = null;
                 $(this.#remoteVideo).parent().removeClass('video'); // container class unmarked
             }
+
             this.#pc.close();
+            if (this.#pingTimer) {
+                clearTimeout(this.#pingTimer);
+                this.#pingTimer = null; 
+            }
         }
     }
 
-    // Improved iceConnectionState handling (thanks @ChatGPT)
     #reconnect() {
-        console.log(`VideoConn: Reconnecting to ${this.#id}`);
         this.#setActive(false);
-
-        // Close the existing RTCPeerConnection
-        if (this.#pc) {
-            this.#pc.close();
+        if (!this.#isInitiator) {
+            console.log(`VideoConn: Passive mode, waiting for user ${this.#id} to initiate restart`);
+            return;
         }
-
-        this.#createPc();
+        console.log(`VideoConn: Initiating reconnect to ${this.#id}`);
         this.#send({ type: 'restart' });
     }
 
     #connectionState(event) {
-        const reconnectTimeout = 3;
+        const reconnectTimeout = 2;
 
         console.log(`VideoConn: ICE Connection State - ${this.#pc.iceConnectionState}`);
 
@@ -254,7 +299,11 @@ class VideoConn {
             case "failed":
             case "disconnected":
                 console.error(`VideoConn: Connection problem with user ${this.#id}. Reattempting in ${reconnectTimeout}s`);
-                setTimeout(this.#reconnect.bind(this), reconnectTimeout * 1000);
+                setTimeout(() => {
+                    if (this.#pc.iceConnectionState != "connected") {
+                        this.#reconnect();
+                    }
+                }, reconnectTimeout * 1000);
                 break;
 
             case "closed":
@@ -263,16 +312,34 @@ class VideoConn {
                 break;
 
             default:
-                // Handle other states as needed
                 break;
         }
     }
 
     #dataChannel(event) {
-        this.#dc = event.channel;
-        this.#dc.onopen = (e) => { 
-            console.log('VideoConn: data channel open.'); 
-        };
+        switch (event.channel.label) {
+            case 'chat' :
+                this.#dc = event.channel;
+                this.#dc.onmessage = this.#messageReceived.bind(this);
+                break;
+
+            case 'ping' :
+                this.#ping = event.channel;        
+                this.#ping.onmessage = this.#heartbeat.bind(this);
+                this.#ping.onopen = () => {
+                    if (this.#isInitiator) {
+                        this.#heartbeat();
+                    }
+                };
+                break;
+
+            default:
+                console.error(`VideoConn: data channel label ${event.channel.label} not found.`);
+                return;
+
+        }
+
+        console.log(`VideoConn: data channel ${event.channel.label} open.`);
     }
 
     #messageReceived(event) {
