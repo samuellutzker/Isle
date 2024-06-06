@@ -377,11 +377,16 @@ class Editor {
 		$(`<button title='Save'>&#128190;</button>`).on('click', () => {
 			const html = `
 				<input type="text" id="dlg_save_name" placeholder="Scenario Name" />
+
 				<p><label for="dlg_save_vp">VP limit:</label><input type="number" min=3 max=99 value=${this.situation['vp_limit']} id="dlg_save_vp" /></p>
+
+				<p><span class='custom-label'>Base game (no ships)</span>
+				<input type="checkbox" id="checkbox_base_game" ${this.situation['base_game'] ? 'checked' : ''} />
+				<label for="checkbox_base_game"></label></p>
 
 				<p><span class='custom-label'>Reward discovery of new terrain</span>
 				<input type="checkbox" id="checkbox_reward_terrain" ${this.situation['reward_discovery'] ? 'checked' : ''} />
-				<label for="checkbox_reward_terrain"></label>
+				<label for="checkbox_reward_terrain"></label></p>
 
 				<p><label for="input_island_bonus">Bonus VP for new island</label>
 				<input type="number" min=0 value=${this.situation['reward_island']} max=99 id="input_island_bonus" /></p>`;
@@ -397,7 +402,8 @@ class Editor {
 			name: scenario, 
 			vp_limit: parseFloat($("#dlg_save_vp").val()),
 			reward_discovery: $("#checkbox_reward_terrain").is(":checked"),
-			reward_island: parseFloat($("#input_island_bonus").val())
+			reward_island: parseFloat($("#input_island_bonus").val()),
+			base_game: $("#checkbox_base_game").is(":checked")
 		}})
 	}
 

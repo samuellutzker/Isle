@@ -121,7 +121,8 @@ only screen and (max-height: 600px) {
 	}
 
 	div#dialog.wide {
-		min-width: 95%;
+/*		min-width: 95%;*/
+		width: 97%;
 	}
 	div#dialog.wide > div {
 		padding-left: 0;

@@ -211,8 +211,9 @@ class Siedler:
 									self.build_options[y][x] = ['move_ship']
 
 		# pirate takes away some options:
-		for x,y in self.hex_adj_edges(self.pirate[0], self.pirate[1]):
-			self.build_options[y][x] = list(set(self.build_options[y][x])-{'move_ship','ship'})
+		if self.pirate is not None:
+			for x,y in self.hex_adj_edges(self.pirate[0], self.pirate[1]):
+				self.build_options[y][x] = list(set(self.build_options[y][x])-{'move_ship','ship'})
 
 
 	# edge coord -> list of possible structures
@@ -221,7 +222,9 @@ class Siedler:
 			return []
 
 		# is something already there? what can we build?
-		options = ['road','ship'] if not self.is_crossing(x, y) else ['village']
+		options = ['road','ship'] if not self.base_game else ['road']
+		if self.is_crossing(x, y):
+			options = ['village']
 		edge = self.edges[y][x]
 		if edge is not None:
 			if edge['structure'] == 'village' and edge['owner_index'] == self.active_idx and not initial_phase:
@@ -277,6 +280,7 @@ class Siedler:
 
 
 	def setup_board(self, scenario):
+		self.base_game = scenario['base_game']
 		self.board = scenario['board']
 		self.width = scenario['width']
 		self.height = scenario['height']
@@ -342,7 +346,7 @@ class Siedler:
 			if self.board[y][x] is not None and self.board[y][x]['terrain'] == 'water']
 
 		self.robber = random.choice(robber_options) if len(robber_options) > 0 else None
-		self.pirate = random.choice(pirate_options) if len(pirate_options) > 0 else None
+		self.pirate = random.choice(pirate_options) if len(pirate_options) > 0 and not self.base_game else None
 
 		# move adjacent 6 and 8
 		def n(x,y):
@@ -427,7 +431,7 @@ class Siedler:
 							self.active_player.harbors.append(self.board[hy][hx]['harbor']['type'])
 
 					if 'island' in self.board[hy][hx] and self.board[hy][hx]['island'] not in self.active_player.colonies:
-						if not self.initial_phase:
+						if not self.initial_phase and self.reward_island > 0:
 							self.active_player.vp += self.reward_island
 							text = f"<div class='icon resources'></div><br />{self.active_player.name} has settled on a new island. <b>+{self.reward_island} VP</b>"
 							await self.room.broadcast(dialog=text, title='Award', style='gold')
@@ -604,7 +608,7 @@ class Siedler:
 
 		if a + b == 7 and not self.debug:
 			# robber strikes
-			self.queue.append(dict(player=self.active_idx, func=self.robber_place, expected='robber', description='Place robber.'))
+			self.queue.append(dict(player=self.active_idx, func=self.robber_place, expected='robber', description='Move robber or pirate.'))
 			for idx,player in enumerate(self.players):
 				if player.storage_size() > 7:
 					lose = player.storage_size() // 2
@@ -717,8 +721,8 @@ class Siedler:
 
 
 	async def robber_place(self, args, x, y):
-		if not self.on_board(x,y) or self.board[y][x] is None or self.board[y][x]['terrain'] == 'hidden':
-			raise GameError('Cannot place robber there.')
+		if not self.on_board(x,y) or self.board[y][x] is None or self.board[y][x]['terrain'] == 'hidden' or self.base_game and self.board[y][x]['terrain'] == 'water':
+			raise GameError('Cannot place robber or pirate there.')
 		if (x,y) in [self.robber, self.pirate]:
 			raise GameError('You must move the robber.')
 
@@ -776,16 +780,16 @@ class Siedler:
 		b = a.copy()
 		b.reverse()
 		c = a+b
-		d = zip(c, (2*n)*[['road','ship'], ['village']], n*[False, True] + n*[False, False])
+		d = zip(c, (2*n)*[['road','ship'] if not self.base_game else ['road'], ['village']], n*[False, True] + n*[False, False])
 		self.queue = [dict(func=self.dice, expected='dice', description='Throw the dice.')]
-		self.queue += [dict(player=player, func=self.free_build, what=structures, payout=payout, 
-			expected='build', description=f'Build {" or ".join(structures)}.') for player, structures, payout in d]
+		self.queue += [dict(player=player, func=self.free_build, what=options, payout=payout, 
+			expected='build', description=f'Build {" or ".join(options)}.') for player, options, payout in d]
 
 
 	# development cards:
 
 	async def card_knight(self):
-		self.queue.append(dict(player=self.active_idx, func=self.robber_place, expected='robber', description='Place robber.'))
+		self.queue.append(dict(player=self.active_idx, func=self.robber_place, expected='robber', description='Move robber or pirate.'))
 		self.active_player.knights += 1
 		if self.active_player.knights >= 3:
 			if self.largest_army == self.active_idx: 
@@ -819,10 +823,12 @@ class Siedler:
 			await self.free_build(**kwargs)
 			amount = kwargs['args']['amount'] - 1
 
+		options = ['road','ship'] if not self.base_game else ['road']
+
 		# check that it is actually possible to build a road or ship
 		if amount > 0 and True in [(True in [self.active_player.figures[structure] > 0 
 		and structure in self.build_options[y][x] for y in range(self.edge_dim_y) for x in range(self.edge_dim_x)]) for structure in ['road', 'ship']]:
-			self.queue.append(dict(func=self.card_roads, amount=amount, what=['road','ship'], expected='build', description='Build road or ship.'))
+			self.queue.append(dict(func=self.card_roads, amount=amount, what=options, expected='build', description=f'Build {" or ".join(options)}.'))
 		return True
 
 

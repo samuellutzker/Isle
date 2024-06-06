@@ -494,7 +494,12 @@ class Scene {
 	}
 
 	mouseEvents(state) {
-		state ? intercept() : intercept('pointermove wheel pointerdown pointerup pointerout pointerover');
+		if (state) {
+			intercept();
+			this.mouse.cursor = { x: null, y: null };
+		} else {
+			intercept('pointermove wheel pointerdown pointerup pointerout pointerover');
+		}
 	}
 
 	setupEvents() {

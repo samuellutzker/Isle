@@ -143,7 +143,7 @@ class Editor:
 			await user.receive(dialog='File exists. Overwrite?', options=dict(yes=dict(do='editor', what={ 'action' : 'save', 'name' : name, 'overwrite' : True }), no=None))
 			return
 
-		scenario = { k:v for k,v in vars(self).items() if k not in ['room', 'shift_x', 'shift_y'] }
+		scenario = { k:v for k,v in vars(self).items() if k not in ['room', 'shift_x', 'shift_y','overwrite'] }
 
 		# Trigger random distribution. No room for non-existing robber / pirate...
 		if len(scenario['robber']) == 0: del scenario['robber']
