@@ -7,7 +7,7 @@ import ssl
 from room import User, Room
 from tools import log, GameError
 
-local_ws = True
+local_ws = False
 
 
 async def handler(socket, path):

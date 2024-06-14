@@ -43,7 +43,7 @@ class Interface {
     }
 
     btnAbout() {
-        const html = `<h1>Thanks for stopping by!</h1>
+        const html = `<div class='icon hexagon'></div><h1>Thanks for stopping by!</h1>
             <p>This implementation of the base game and Seafarers extension of Catan by Klaus Teuber was programmed by Sam Lutzker in 2023/24, 
             for private, non-commercial use only.</p>
             <p>To view the rules, or a short overview of building prices click the options below.</p>`;
@@ -88,24 +88,24 @@ class Interface {
 
     btnGame() {
         const start = () => {
-            let html = "<h1>Play or edit one of the following scenarios:</h1><select id='dlg_load_scenario'>";
+            let html = "<div class='icon hexagon'></div><h1>Play Catan</h1><p>Play or edit one of the following scenarios, or create a new one:</p><select id='dlg_load_scenario'>";
             this.#scenarios.forEach((s) => html += `<option value='${s}'>${capital(s)}</option>`);
-            html += '</select>';
+            html += '<option value="_new">New scenario...</option></select><hr width="70%" />';
 
             dialog("Start Game", html, {
-                "Play" : () => Siedler.start($("#dlg_load_scenario").val()),
+                "Play" : () => $("#dlg_load_scenario").val() == '_new' ? Editor.start() : Siedler.start($("#dlg_load_scenario").val()),
                 "Edit" : () => {
                     const scenario = $("#dlg_load_scenario").val();
-                    dialog("Editor", `Do you want to open or delete ${capital(scenario)}, or create a new scenario?`, {
+                    dialog("Edit Scenario", `Do you want to open or delete ${capital(scenario)}?`, {
                         "Open" : () => Editor.start(scenario),
                         "Delete" : () => {
-                            dialog("Editor", `Are you sure?`, { "Yes" : () => Editor.delete(scenario), "No" : null });
+                            dialog("Delete", `Delete scenario ${scenario}. Are you sure?`, { "Yes" : () => Editor.delete(scenario), "No" : null }, null, "red");
                         },
-                        "New" : Editor.start
+                        "Cancel" : null
                     });
                 },
                 "Cancel" : null
-            });
+            }, () => $("#dlg_load_scenario").on('change', () => $("#dlg_load_scenario").val() == '_new' ? closeDialog() : null));
         }
 
         if ($("body").hasClass('playing')) {
