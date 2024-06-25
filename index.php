@@ -30,7 +30,7 @@
         <script type="text/javascript"> 
 
         const DEBUG_AUTH = "<?php echo $_GET['debug'] ?? ""; ?>";
-        const LOCAL_WS = false;
+        const LOCAL_WS = true;
 
         <?php
             function folder_walk($dir, ...$extensions) {
@@ -102,7 +102,7 @@
         const startup = async () => {
             const WSS_URL = LOCAL_WS ? `ws://${window.location.hostname}:8080` : `wss://${window.location.hostname}:8765`;
 
-            const allImages = <?php echo json_encode(folder_walk('images', 'jpg', 'jpeg', 'png')); ?>;
+            const allImages = <?php echo json_encode(folder_walk('images', 'jpg', 'jpeg', 'png', 'gif')); ?>;
             const audios = <?php echo json_encode(get_file_roots('sounds', 'mp3')); ?>;
             const scenarios = <?php echo json_encode(get_file_roots('scenarios', 'json')); ?>;
 
@@ -121,8 +121,8 @@
 
         </script>
     </head>
-    <body onload="startup()">
 
+    <body onload="startup()">
         <div id="main">
 
             <span id="logo">
@@ -226,6 +226,5 @@
             </div>
 
         </div> <!-- main -->
-
     </body>
 </html>

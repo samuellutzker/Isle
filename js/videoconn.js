@@ -56,7 +56,10 @@ class VideoConn {
     }
 
     static async start() {
-        $(".myself").addClass("video").find(".face").append("<video id='myvid' style='transform: scaleX(-1)' playsinline autoplay muted></video>");
+        $(".myself")
+            .addClass("video")
+            .find(".face")
+            .append("<video id='myvid' poster='images/loading.gif' style='transform: scaleX(-1)' playsinline autoplay muted></video>");
 
         VideoConn.#localVideo = $("video#myvid")[0];
 
@@ -103,7 +106,7 @@ class VideoConn {
     #isInitiator; // is active part of reconnect process
 
     constructor(id, videoTagContainer, dataCallback) {
-        let $video = $("<video id='video_user_"+id+"' playsinline autoplay></video>").appendTo(videoTagContainer);
+        let $video = $("<video id='video_user_"+id+"' poster='images/loading.gif' playsinline autoplay></video>").appendTo(videoTagContainer);
 
         this.active = false;
         this.#isInitiator = false;

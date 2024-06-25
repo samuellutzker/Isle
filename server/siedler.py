@@ -345,8 +345,8 @@ class Siedler:
 		pirate_options = scenario['pirate'] if 'pirate' in scenario else [(x,y) for y in range(self.height) for x in range(self.width) 
 			if self.board[y][x] is not None and self.board[y][x]['terrain'] == 'water']
 
-		self.robber = random.choice(robber_options) if len(robber_options) > 0 else None
-		self.pirate = random.choice(pirate_options) if len(pirate_options) > 0 and not self.base_game else None
+		self.robber = tuple(random.choice(robber_options)) if len(robber_options) > 0 else None
+		self.pirate = tuple(random.choice(pirate_options)) if len(pirate_options) > 0 and not self.base_game else None
 
 		# move adjacent 6 and 8
 		def n(x,y):
