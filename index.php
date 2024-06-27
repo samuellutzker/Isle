@@ -2,10 +2,11 @@
 <html lang="en">
     <head>
         <title>CATAN to go</title>
+
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-        <link rel="icon" type="image/x-icon" href="images/favicon.ico">
 
+        <link rel="icon" type="image/x-icon" href="images/favicon.ico">
         <link rel="stylesheet" href="css/style.css?v=<?php echo filemtime('css/style.css'); ?>" />
         <link rel="stylesheet" href="css/siedler.css?v=<?php echo filemtime('css/siedler.css'); ?>" />
         <link rel="stylesheet" href="css/editor.css?v=<?php echo filemtime('css/editor.css'); ?>" />
@@ -27,7 +28,7 @@
         <script src="js/videoconn.js"></script>
         <script src="js/editor.js"></script>
         <script src="js/siedler.js"></script>
-        <script type="text/javascript"> 
+        <script type="text/javascript">
 
         const DEBUG_AUTH = "<?php echo $_GET['debug'] ?? ""; ?>";
         const LOCAL_WS = true;
