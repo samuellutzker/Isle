@@ -56,6 +56,9 @@ class VideoConn {
     }
 
     static async start() {
+        if (this.on) return;
+        this.on = 1;
+
         $(".myself")
             .addClass("video")
             .find(".face")
@@ -64,8 +67,9 @@ class VideoConn {
         VideoConn.#localVideo = $("video#myvid")[0];
 
         try {
-            var stream = await navigator.mediaDevices.getUserMedia(VideoConn.#mediaConstraints);
-            this.on = 1;
+            const stream = await navigator.mediaDevices.getUserMedia(VideoConn.#mediaConstraints);
+
+            if (!this.on) return; // maybe video was turned off in the mean time
             VideoConn.#localStream = stream;
             VideoConn.#localVideo.srcObject = stream;
             this.signal();
@@ -75,20 +79,23 @@ class VideoConn {
     }
 
     static stop() {
-        if (VideoConn.#localVideo && VideoConn.#localStream) {
-            this.on = 0;
-            $(".myself").removeClass('video').find('video').remove();
-            VideoConn.#localVideo.srcObject = null;
+        if (!this.on) return;
+        this.on = 0;
+
+        $(".myself").removeClass('video').find('video').remove();
+
+        if (VideoConn.#localStream) {
             VideoConn.#localStream.getTracks().forEach((track) => { 
                 track.stop(); 
                 this.#localStream.removeTrack(track); 
             });
-            VideoConn.#localStream = VideoConn.#localVideo = null;
+        }
 
-            this.signal();
-            for (let id in VideoConn.#all) {
-                VideoConn.#all[id].hangup();
-            }
+        VideoConn.#localStream = VideoConn.#localVideo = null;
+
+        this.signal();
+        for (let id in VideoConn.#all) {
+            VideoConn.#all[id].hangup();
         }
     }
 
@@ -106,7 +113,7 @@ class VideoConn {
     #isInitiator; // is active part of reconnect process
 
     constructor(id, videoTagContainer, dataCallback) {
-        let $video = $("<video id='video_user_"+id+"' poster='images/loading.gif' playsinline autoplay></video>").appendTo(videoTagContainer);
+        const $video = $("<video id='video_user_"+id+"' poster='images/loading.gif' playsinline autoplay></video>").appendTo(videoTagContainer);
 
         this.active = false;
         this.#isInitiator = false;
@@ -140,7 +147,7 @@ class VideoConn {
 
     async receive(msgs) {
 
-        let msg = JSON.parse(msgs);
+        const msg = JSON.parse(msgs);
 
         switch (msg.type) {
             case 'offer' :
@@ -221,7 +228,7 @@ class VideoConn {
 
 
     #createPc() {
-        var pc = new RTCPeerConnection(VideoConn.#pcConfig);
+        const pc = new RTCPeerConnection(VideoConn.#pcConfig);
         pc.onicecandidate               = this.#iceCandidate.bind(this);
         pc.ontrack                      = this.#trackAdded.bind(this);
         pc.oniceconnectionstatechange   = this.#connectionState.bind(this);
