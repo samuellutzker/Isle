@@ -51,10 +51,10 @@ class Interface {
         dialog("CATAN to go", html, {
             "Close" : null, 
             "Prices" : () => dialog("Building Prices", $("#info").html(), null, null, 'wide'), 
-            "Rules" : () => dialog("Open Rules", "<p>Display the rules of Catan base game, or the seafarer extension?</p>", {
-                "Cancel" : null,
+            "Rules" : () => dialog("View Rules", "<p>Display the rules of the Catan base game, or the Seafarers extension?</p>", {
                 "Base" : () => window.open('rules/rules_catan_base_2020.pdf'),
-                "Seafarers" : () => window.open('rules/rules_catan_seafarers_2021.pdf')
+                "Seafarers" : () => window.open('rules/rules_catan_seafarers_2021.pdf'),
+                "Close" : null
             })
         }, null, 'wide');
     }
