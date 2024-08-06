@@ -198,7 +198,7 @@ class VideoConn {
 
 
     #heartbeat() {
-        const heartbeatInterval = 500;
+        const heartbeatInterval = 1000;
 
         if (this.#isInitiator) {
             if (!this.#pingTimer) {

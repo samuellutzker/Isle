@@ -51,7 +51,7 @@ canvas#siedler_board {
     border-color: darkgray;
 }
 
-/* info icons*/
+/* info icons */
 
 .icon.knights:before, .icon.road_max:before, .icon.resources:before, .icon.cards:before, .icon.trophy:before, .icon.hexagon:before {
     background-image: url('../images/symbols/knights.png');
@@ -77,7 +77,7 @@ canvas#siedler_board {
     background-image: url('../images/symbols/hexagon.png');
 }
 
-/* card */
+/* development card */
 
 div.card:before {
     content: attr(title);

@@ -56,7 +56,7 @@
             }
 
             function get_file_roots($base_dir, $extension) {
-              $files = [];
+                $files = [];
                 if ($handle = opendir($base_dir)) {
                     while (false !== ($entry = readdir($handle))) {
                         if ($entry != "." && $entry != "..") {
