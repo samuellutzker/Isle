@@ -891,7 +891,7 @@ class Siedler:
 
 	async def resume(self, user, key):
 		for player in self.players:
-			if key == player.key:
+			if key == player.key and player.id not in self.room.members:
 				# set player up
 				player.user = user
 				player.id = user.id
@@ -909,7 +909,7 @@ class Siedler:
 
 				return
 
-		raise GameError('Incorrect link or game does not exist anymore.')
+		raise GameError('Incorrect link, player already logged in or game does not exist anymore.')
 
 
 	# calculate all players road lengths and store them.
