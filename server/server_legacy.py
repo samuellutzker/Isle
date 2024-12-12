@@ -10,7 +10,7 @@ from tools import log, GameError
 local_ws = True
 
 
-async def handler(socket):
+async def handler(socket, path):
 
     async def error(msg):
         await socket.send(json.dumps({ 'alert' : str(msg) }))
@@ -95,18 +95,16 @@ async def handler(socket):
             except GameError as e:
                 await error(e)
 
-async def main():
-    if local_ws:
-        # WS:
-        start_server = websockets.serve(handler, "0.0.0.0", 8080)
-    else:
-        # WSS:
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ctx.load_cert_chain('server/cert/fullchain.pem', 'server/cert/privkey.pem')
-        start_server = websockets.serve(handler, "0.0.0.0", 8765, ssl=ctx)
 
-    async with start_server:
-        await asyncio.Future()
+if local_ws:
+    # WS:
+    start_server = websockets.serve(handler, "0.0.0.0", 8080)
+else:
+    # WSS:
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.load_cert_chain('server/cert/fullchain.pem', 'server/cert/privkey.pem')
+    start_server = websockets.serve(handler, "0.0.0.0", 8765, ssl=ctx)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()

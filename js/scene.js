@@ -120,10 +120,10 @@ class Scene {
 	}
 
 	onResize() {
-	    const dpr = window.devicePixelRatio;
-      	let {width, height} = this.canvas.getBoundingClientRect();
-      	width *= dpr; 
-      	height *= dpr;
+		const dpr = window.devicePixelRatio;
+		let {width, height} = this.canvas.getBoundingClientRect();
+		width *= dpr; 
+		height *= dpr;
 
 		$(this.canvas)
 			.prop('width', width)

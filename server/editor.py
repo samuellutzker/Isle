@@ -20,7 +20,7 @@ class Editor:
 	def lookup(self,x,y):
 		return self.board[y][x] if x < self.width and y < self.height and x >= 0 and y >= 0 else None
 
-	def resizeBoard(self, width, height, shift_x, shift_y):
+	def resize_board(self, width, height, shift_x, shift_y):
 		self.board = [[self.lookup(x-shift_x, y-shift_y) for x in range(width)] for y in range(height)]
 		self.robber = [[x+shift_x, y+shift_y] for x,y in self.robber]
 		self.pirate = [[x+shift_x, y+shift_y] for x,y in self.pirate]
@@ -29,7 +29,7 @@ class Editor:
 		self.shift_x += shift_x
 		self.shift_y += shift_y
 
-	def shrinkBoard(self):
+	def shrink_board(self):
 		# Brute force search
 		frame_x = [x for x in range(self.width) if len([y for y in range(self.height) if self.board[y][x] is not None]) > 0]
 		frame_y = [y for y in range(self.height) if len([x for x in range(self.width) if self.board[y][x] is not None]) > 0]
@@ -45,9 +45,9 @@ class Editor:
 		shift_x, shift_y = min(frame_x), min(frame_y)
 		width, height = max(frame_x)+1-shift_x, max(frame_y)+1-shift_y
 
-		self.resizeBoard(width, height, -shift_x, -shift_y)
+		self.resize_board(width, height, -shift_x, -shift_y)
 
-	async def describeTo(self, user):
+	async def describe_to(self, user):
 		situation = { k:v for k,v in vars(self).items() if k != 'room'}
 		await user.receive(at='editor', do='load', situation=situation)
 		await user.receive(at='editor', do='message', msg='Editor room.')
@@ -79,7 +79,7 @@ class Editor:
 		elif action == 'board' and 'x' in kwargs and 'y' in kwargs and 'hex' in kwargs:
 			x, y = kwargs['x'] + self.shift_x, kwargs['y'] + self.shift_y
 			if self.width == 0 and self.height == 0:
-				self.resizeBoard(1, 1, 0, 0)
+				self.resize_board(1, 1, 0, 0)
 				self.board[0][0] = kwargs['hex']
 				self.shift_x, self.shift_y = -x, -y
 			else:
@@ -95,7 +95,7 @@ class Editor:
 					y = 0
 
 				if w > self.width or h > self.height:
-					self.resizeBoard(w, h, sh_x, sh_y)
+					self.resize_board(w, h, sh_x, sh_y)
 
 				if self.board[y][x] is not None:
 					await self.room.broadcast(at='editor', do='delete', x=kwargs['x'], y=kwargs['y'], hex=self.board[y][x])
@@ -108,13 +108,12 @@ class Editor:
 					self.pirate.remove([x,y])
 					await self.room.broadcast(at='editor', do='pirate', x=kwargs['x'], y=kwargs['y'], remove=True)
 
-				# else shrink board
 				self.board[y][x] = kwargs['hex']
 
 			if kwargs['hex'] is not None:
 				await self.room.broadcast(at='editor', do='hex', x=kwargs['x'], y=kwargs['y'], hex=kwargs['hex'])
 			else:
-				self.shrinkBoard()
+				self.shrink_board()
 
 	async def load(self, name):
 		try:
