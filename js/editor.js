@@ -1,7 +1,9 @@
 'use strict';
 
+// Editor class: Interface for scenario editing. Handles a Scene instance just like class Siedler.
+
 // Next:
-// Set author, text
+// Set author and text description
 
 class Editor {
 	static start(scenario) {
@@ -16,14 +18,14 @@ class Editor {
 	isRobberMode;
 	canvas;
 	scene;
-	hex; // Current element in detail
-	selected; // Current element as string
-	situation; // Scenario data
-	shift; // The center of the board
-	pileIdx; // The current pile (1,2,3,4,fixed)
-	available; // Number of available tiles
-	placed; // Number of placed tiles
-	dlgSetting; // Memory of dialog box
+	hex; 		// Current element in detail
+	selected; 	// Current element as string
+	situation; 	// Scenario data
+	shift; 		// The center of the board
+	pileIdx; 	// The current pile (1,2,3,4,fixed)
+	available; 	// Number of available tiles
+	placed; 	// Number of placed tiles
+	dlgSetting;	// Memory of dialog box
 
 	constructor() {
 		$("body").addClass("playing");
@@ -41,6 +43,7 @@ class Editor {
 		this.dlgSetting = {};
 	}
 
+	// Reset cursor to default setting
 	waterCursor() {
 		this.scene.setCursor('hex', false, false);
 		this.scene.setClickables([ 'water' ]);
@@ -59,6 +62,7 @@ class Editor {
 		this.isRobberMode = true;
 	}
 
+	// Main function to add or remove a tile. Adds it to the scene and stores it.
 	setHex(hex, x, y, remove) {
 		!remove ? this.scene.placeHex(hex, x, y) : this.scene.remove(['hex','cursor','chip','triangle'], x, y);
 
@@ -123,6 +127,7 @@ class Editor {
 		});
 	}
 
+	// Open a dialog to let the user select the terrain type to place
 	selectTerrainBtn() {
 		const piles = 4;
 		const resources = Siedler.resources.concat([ 'generic' ]);
@@ -417,6 +422,7 @@ class Editor {
 		message(false, '');
 	}
 
+	// Main rendering loop
 	async run(situation) {
 		if (this.isRunning)
 			return;

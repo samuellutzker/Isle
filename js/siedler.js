@@ -1,5 +1,7 @@
 'use strict';
 
+// Siedler class: Responsible for the game interface. Creates an instance of class Scene for graphics.
+
 class Siedler {
 	static isSoundOn = true;
 	static sounds = {};
@@ -31,11 +33,11 @@ class Siedler {
 	isRobberMode;
 	scene;
 	canvas;
-	players; // id -> class Person
-	activeId; // id of active player
-	storage; // resources in storage
+	players; 	// id -> class Person
+	activeId; 	// id of active player
+	storage; 	// resources in storage
 	storageDlg; // current setting in resources dialog
-	idx2id; // player index => player id
+	idx2id; 	// player index -> player id
 
 	constructor(players) {
 		$("body").addClass("playing");
@@ -46,6 +48,7 @@ class Siedler {
 		this.scene = new Scene(this.canvas);
 	}
 
+	// Handle message from the server
 	async update(obj) {
 		if (obj.description !== undefined) {
 			message(obj.do == 'await', obj.description);
@@ -236,6 +239,7 @@ class Siedler {
 			this.scene.placeFigure('pirate', situation.pirate[0], situation.pirate[1]);
 	}
 
+	// Main rendering loop
 	async run(situation) {
 		if (this.isRunning)
 			return;
@@ -263,7 +267,6 @@ class Siedler {
 		}
 		requestAnimationFrame(render);
 	}
-
 
 	onClick(boardPos, scrPos) {
 		if (this.isRobberMode) {
@@ -318,7 +321,6 @@ class Siedler {
 		}
 	}
 
-
 	leave() {
 		if (this.scene)
 			this.scene.clearEvents();
@@ -329,8 +331,7 @@ class Siedler {
 		message(false, '');
 	}
 
-	// Different dialogs:
-
+	// Trading resources dialog
 	storageManager(setup, description) {
 		const empty = {lumber: 0, brick: 0, wool: 0, grain: 0, ore: 0};
 
@@ -389,6 +390,7 @@ class Siedler {
 		}
 	}
 
+	// Make some players clickable
 	selectPlayer(clickable, description) {
 		message(true, description);
 		Person.select();
@@ -407,9 +409,10 @@ class Siedler {
 		}
 	}
 
+	// Return html code of a card for cardManager()
 	card(card, index) {
 		if (!card) {
-			// Buy card
+			// Buy a card
 			const buy = `
 				Server.query({ do: "game", what: { action: "card", buy: true }}); 
 				closeDialog(); 
@@ -438,6 +441,7 @@ class Siedler {
 		}
 	}
 
+	// Show all development cards
 	cardManager(cards) {
 		message();
 

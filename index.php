@@ -1,6 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <?php
+            // Retrieve all file names with extensions from folder $dir and subfolders
+            function folder_walk($dir, ...$extensions) {
+                $files = [];
+                if ($handle = opendir($dir)) {
+                    while (false !== ($entry = readdir($handle))) {
+                        if ($entry != "." && $entry != "..") {
+                            $path = $dir."/".$entry;
+                            if (is_dir($path)) {
+                                // Recursive search
+                                $files = array_merge($files, folder_walk($path, ...$extensions));
+                            } else {
+                                $parts = explode('.', $entry);
+                                if (in_array($parts[sizeof($parts)-1], $extensions)) {
+                                    $files[] = $path;
+                                }
+                            }
+                        }
+                    }
+                    closedir($handle);
+                }
+                return $files;
+            }
+
+            // Remove path and file extension from all file names in array
+            function get_file_roots($fnames) {
+                return array_map(fn($name) => preg_replace('/(.*\/|\.[^.]+$)/', '', $name), $fnames);
+            }
+
+            // Check if $_GET arguments are acceptable
+            function is_proper(...$vars) {
+                foreach ($vars as $var)
+                    if (preg_match('/[^a-z_\-0-9]/i', $var))
+                        return false;
+
+                return true;
+            }
+        ?>
+
         <title>CATAN to go</title>
 
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -11,6 +50,14 @@
         <link rel="stylesheet" href="css/siedler.css?v=<?php echo filemtime('css/siedler.css'); ?>" />
         <link rel="stylesheet" href="css/editor.css?v=<?php echo filemtime('css/editor.css'); ?>" />
         <link rel="stylesheet" href="css/responsive.css?v=<?php echo filemtime('css/responsive.css'); ?>" />
+        <?php
+            $fonts = folder_walk('fonts', 'ttf');
+
+            foreach ($fonts as $font) {
+                echo "\n\t\t<link rel=\"preload\" href=\"$font\" as=\"font\" type=\"font/ttf\" crossorigin>";
+            }
+        ?>
+
 
         <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
         <script src="js/lib/jquery-3.7.1.min.js"></script>
@@ -32,53 +79,6 @@
 
         const DEBUG_AUTH = "<?php echo $_GET['debug'] ?? ""; ?>";
         const LOCAL_WS = true;
-
-        <?php
-            function folder_walk($dir, ...$extensions) {
-                $files = [];
-                if ($handle = opendir($dir)) {
-                    while (false !== ($entry = readdir($handle))) {
-                        if ($entry != "." && $entry != "..") {
-                            $path = $dir."/".$entry;
-                            if (is_dir($path)) {
-                                $files = array_merge($files, folder_walk($path, ...$extensions));
-                            } else {
-                                $parts = explode('.', $entry);
-                                if (in_array($parts[sizeof($parts)-1], $extensions)) {
-                                    $files[] = $path;
-                                }
-                            }
-                        }
-                    }
-                    closedir($handle);
-                }   
-                return $files;
-            }
-
-            function get_file_roots($base_dir, $extension) {
-                $files = [];
-                if ($handle = opendir($base_dir)) {
-                    while (false !== ($entry = readdir($handle))) {
-                        if ($entry != "." && $entry != "..") {
-                            $parts = explode('.', $entry);
-                            if (array_pop($parts) == $extension) {
-                                $files[] = implode('.', $parts);
-                            }
-                        }
-                    }
-                    closedir($handle);
-                }   
-                return $files;  
-            }
-
-            function is_proper(...$vars) {
-                foreach ($vars as $var)
-                    if (preg_match('/[^a-z_\-0-9]/i', $var))
-                        return false;
-
-                return true;
-            }
-        ?>
 
         var main;
 
@@ -104,19 +104,18 @@
             const WSS_URL = LOCAL_WS ? `ws://${window.location.hostname}:8080` : `wss://${window.location.hostname}:8765`;
 
             const allImages = <?php echo json_encode(folder_walk('images', 'jpg', 'jpeg', 'png', 'gif')); ?>;
-            const audios = <?php echo json_encode(get_file_roots('sounds', 'mp3')); ?>;
-            const scenarios = <?php echo json_encode(get_file_roots('scenarios', 'json')); ?>;
+            const audios = <?php echo json_encode(get_file_roots(folder_walk('sounds', 'mp3'))); ?>;
+            const scenarios = <?php echo json_encode(get_file_roots(folder_walk('scenarios', 'json'))); ?>;
 
             Siedler.audioPreload(audios);
             await imgPreload(allImages);
             await Server.connect(WSS_URL);
 
-
             <?php
                 if (isset($_GET['user'], $_GET['room'], $_GET['key']) && is_proper($_GET['user'], $_GET['room'], $_GET['key']))
-                    echo "main = new Interface(scenarios, '{$_GET['user']}', '{$_GET['room']}', '{$_GET['key']}');";
+                    echo "main = new Interface(scenarios, '{$_GET['user']}', '{$_GET['room']}', '{$_GET['key']}');\n";
                 else
-                    echo "main = new Interface(scenarios);";
+                    echo "main = new Interface(scenarios);\n";
             ?>
         };
 

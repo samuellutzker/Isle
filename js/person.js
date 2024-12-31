@@ -1,12 +1,14 @@
 'use strict';
 
+// Person class: Each instance takes care of one logged on user
+
 const PERSON_W = 0.1;
 const PERSON_H = 0.15;
 const PERSON_ASPECT = 1.6;
 
 class Person {
-    static selected; // Currently selected user
-    static myself;
+    static selected;    // Currently selected user (for direct messaging)
+    static myself;      // Contains the user's own instance
 
     static select(person) {
         if (this.selected) {
@@ -42,13 +44,13 @@ class Person {
     #id;
     #name;
     #domId;
-    #videoOn;
-    #videoConn;
+    #videoOn;   // VideoConn is active
+    #videoConn; // VideoConn connection object
     #x;
     #y;
-    #isMe;
+    #isMe;      // Is this the user himself?
 
-    $el;
+    $el;        // jQuery element
 
     constructor(id, name, color, isMe) {
         this.#id = id;
@@ -91,6 +93,7 @@ class Person {
         }
     }
 
+    // Handle messages from the server
     update(obj) {
         switch (obj.do) {
             case 'rtc' :
@@ -227,5 +230,4 @@ class Person {
             this.#videoConn = new VideoConn(this.#id, this.$el.find(".face"), (msg) => this.update({ do: "chat", msg: "<b>[DM]</b> &laquo;" + msg + "&raquo;" }));
         }
     }
-
 }

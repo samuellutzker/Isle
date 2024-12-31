@@ -1,17 +1,20 @@
 'use strict';
 
+// Server class: Static methods for WebSocket communication with the game server
+
 class Server {
-    static #url; // WebSocket URL
-    static #socket; // WebSocket object
-    static #message = async () => {}; // onMessage handler
-    static #close = async () => {}; // onClose handler
-    static #failed = []; // buffered queries during connection problem
+    static #url;                        // WebSocket URL
+    static #socket;                     // WebSocket object
+    static #message = async () => {};   // onMessage handler
+    static #close = async () => {};     // onClose handler
+    static #failed = [];                // Buffered queries during connection problem
 
     static setHandlers(message, close) {
         this.#message = message ?? this.#message;
         this.#close = close ?? this.#close;
     }
 
+    // Keep connection alive
     static #reconnect = async () => {
         const reconnectInterval = 3;
 
@@ -29,7 +32,7 @@ class Server {
         }
     };
 
-
+    // Main query routine. If query fails it is buffered for later retries upon reconnect.
     static query(params) {
         if (this.#socket) {
             this.#socket.send(JSON.stringify(params));
@@ -40,6 +43,7 @@ class Server {
         }
     }
 
+    // (Re-)establish connection and execute buffered (unsuccessful) queries
     static async connect(url) {
         this.#url = url;
 

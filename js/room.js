@@ -1,13 +1,14 @@
 'use strict';
 
+// Room class: Interface for a game room holding all logged on users
+
 class Room {
-    #users; // id -> class User
+    #users;     // id -> class User
     #roomName;
     #myName;
     #ok;
-    #$myself;
-    #game;
-    #key;
+    #game;      // Holds an instance of Game or Editor
+    #key;       // Access key to resume current game
 
     constructor(myName, roomName, key) {
         this.#roomName = roomName;
@@ -44,6 +45,7 @@ class Room {
         Server.query({ do: 'send', msg: { at: "user", do: "chat", msg: `&raquo;${text}&laquo;` }});
     }
 
+    // Handle or delegate message from the server
     async update(obj) {
         if (obj.at == 'room') {
             switch (obj.do) {
@@ -99,7 +101,8 @@ class Room {
         }
     }
 
-    setLink(args) { 
+    // Store the current access link to the running game in location bar
+    setLink(args) {
         const link = window.location.origin + window.location.pathname + args;
         window.history.pushState({}, "", link);
     }

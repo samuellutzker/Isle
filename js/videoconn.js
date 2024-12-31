@@ -1,11 +1,13 @@
 'use strict';
 
+// VideoConn class: Handles WebRTC real-time video signaling. One instance per connection.
+
 class VideoConn {
 
     static on = 0;
-    static #all = {}; // userId -> class VideoConn
-    static #localStream; // user media
-    static #localVideo; // video tag
+    static #all = {};       // userId -> class VideoConn
+    static #localStream;    // user media
+    static #localVideo;     // video tag
 
     // RTCPeerConnection configuration:
     static #mediaConstraints = {
@@ -102,15 +104,15 @@ class VideoConn {
     active;
 
     #id;
-    #pc; // RTCPeerConnection
-    #dc; // RTCDataChannel
-    #ping; // RTCDataChannel
-    #pingTimer; // for ping-pong clearTimeout
-    #isAlive; // ping-pong ok
+    #pc;            // RTCPeerConnection
+    #dc;            // RTCDataChannel
+    #ping;          // RTCDataChannel
+    #pingTimer;     // Id for ping-pong clearTimeout
+    #isAlive;       // Flag if ping-pong heartbeat arrived
     #remoteStream;
     #remoteVideo;
     #dataCallback;
-    #isInitiator; // is active part of reconnect process
+    #isInitiator;   // this user has active role in reconnect process
 
     constructor(id, videoTagContainer, dataCallback) {
         const $video = $("<video id='video_user_"+id+"' poster='images/loading.gif' playsinline autoplay></video>").appendTo(videoTagContainer);

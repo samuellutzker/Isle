@@ -1,22 +1,29 @@
 'use strict';
 
-// improve hard coding for edgeToWorld, onBoard etc.
-// upon hiding objects, queue order gets changed => problems with transparency in Editor
+// Scene class: Responsible for WebGL game visualization
+
+// Known issues:
+// - need performance improvement: hard code edgeToWorld, onBoard etc.
+// - upon hiding objects, queue order gets changed => problems with transparency in Editor
+// - reduce matrix inversion calls
 
 class Scene {
 	static tan30 = Math.tan(Math.PI / 6.0);
-	static tileHeight = (this.tan30 + Math.sqrt(1.0 + this.tan30 * this.tan30)) / 2.0;
-	static rgba = {}; // name -> [R,G,B,A]
+	static tileHeight = (this.tan30 + Math.sqrt(1.0 + this.tan30 * this.tan30)) / 2.0; // Hexagon height
+	static rgba = {}; // nameToRgba cache. name -> [R,G,B,A]
 
+	// Retrieve an edge's angle from its x-coordinate
 	static roadRotation(x) {
 		if ((x % 5) == 0) return 0;
 		return (x % 5) > 2 ? (2 * Math.PI / 3) : (Math.PI / 3);
 	}
 
+	// Is the given edge coordinate a crossing?
 	static isCrossing(x,y) {
 		return (x % 5) % 2 == 1;
 	}
 
+	// Retrieve rgba array from html color name
 	static nameToRgba(name) {
 		if (!(name in this.rgba)) {
 		    var canvas = document.createElement('canvas');
@@ -35,23 +42,23 @@ class Scene {
 	gl;
 	canvas;
 	shader;
-	projView; // ProjectMat * ViewMat
-	viewRefresh; // flag necessary update of projView
+	projView; 		// ProjectMat * ViewMat
+	viewRefresh; 	// Flag a necessary update of projView
 
-	models; // name -> class Model
+	models; 		// Name -> class Model
 
-	// lights:
+	// Lights
 	backlight;
 	lamp;
 	flashlight;
 
-	edges; // hexagon edge coordinates
-	center; // the board's center
-	mouse; // huge object containing all necessary mouse info
-	queue; // drawing queue
-	edgeOnBoard; // lookup for edgeToBoard
-	clickables; // 2d board-pos -> build options
-	doAction; // handler for clicks
+	edges; 			// Hexagon edge coordinates
+	center; 		// Board view center
+	mouse; 			// Object containing all necessary mouse info
+	queue; 			// Drawing queue
+	edgeOnBoard; 	// Lookup for edgeToBoard
+	clickables;		// 2d board-pos -> build options
+	doAction; 		// Handler for clicks
 
 	constructor(canvas) {
 		this.canvas = canvas;
@@ -62,14 +69,14 @@ class Scene {
 		this.viewRefresh = true;
 		this.mouse = { 
 			isTouch: matchMedia('(hover: none), (pointer: coarse)').matches,
-			over: true, // mouse is on screen
-			cursorOn: matchMedia('(hover: none), (pointer: coarse)').matches, // show or hide cursor
+			over: true, 	// Mouse is on screen
+			cursorOn: matchMedia('(hover: none), (pointer: coarse)').matches,
 			numCursors: 0,
-			isEdge: true, // board and world are edge coordinates
-			evt: [], // touch event buffer
-			pinch: null, // two fingers on touch screen
-			down: null, // position of mouse button pressed
-			autoTilt: true // change view angle according to position
+			isEdge: true, 	// Board and world are edge coordinates
+			evt: [], 		// Touch event buffer
+			pinch: null, 	// Two fingers on touch screen
+			down: null, 	// Position of mouse button pressed
+			autoTilt: true 	// Flag: change view angle according to position
 		};
 		['scr','last','pos','world','closest','tilt','shift','board','cursor'].forEach((i) => this.mouse[i] = { x: 0, y: 0 });
 
@@ -83,6 +90,7 @@ class Scene {
 		];
 		this.models = {};
 
+		// Structures for the shader:
 		const attribs = { 
 			vPos: null, 
 			vTex: null, 
@@ -102,6 +110,7 @@ class Scene {
 				shininess: null 
 			}
 		};
+		
 		this.shader = new Shader(this.gl, attribs, uniforms);
 
 		Light.reset();
@@ -109,6 +118,7 @@ class Scene {
 		this.setCenter(0, 0);
 	}
 
+	// Set center of board view
 	setCenter(x,y) {
 		this.center = { x: x, y: y };
 	}
@@ -119,6 +129,7 @@ class Scene {
 		$(this.canvas).off('.scene');
 	}
 
+	// Get a new GL canvas and context for a resized window
 	onResize() {
 		const dpr = window.devicePixelRatio;
 		let {width, height} = this.canvas.getBoundingClientRect();
@@ -138,7 +149,7 @@ class Scene {
 		this.viewRefresh = true;
 	}
 
-	// Place a structure (village, road, etc) on the edges
+	// Add structure (village, road, etc.) on given edge coord to the drawing queue
 	place(what, x, y, color, rotation) {
 		const p = this.edgeToWorld(x, y);
 		let transform = null;
@@ -155,6 +166,7 @@ class Scene {
 			return;
 		}
 
+		// Iterate through objects that need to be replaced by something else
 		const q = this.queue;
 		for (let i in q) {
 			for (let r=q[i],s=null; r != null; s=r,r=r.replace) {
@@ -175,6 +187,7 @@ class Scene {
 		return null;
 	}
 
+	// Add an instance of a model to the drawing queue
 	addObject(what, x, y, z, color, colorSat, transform, id_x, id_y, id_type, replace) {
 		const model = {
 			what: what,
@@ -219,8 +232,8 @@ class Scene {
 		this.models[model.what].draw(gl, this.shader);
 	}
 
-	// Converts between board matrix edge coords (edge,corner,edge,corner,edge)
-	// and real world coordinates (assumed z=0)
+	// Convert from board matrix edge coords (edge,corner,edge,corner,edge)
+	// to real world (assumed z=0)
 	edgeToWorld(x, y) {
 		const place = x % 5;
 		x = Math.floor(x / 5);
@@ -228,6 +241,7 @@ class Scene {
 		return { x: center.x + this.edges[2*place], y: center.y + this.edges[2*place + 1] };
 	}
 
+	// Reverse edgeToWorld()
 	edgeToBoard(x, y) {
 		const rounded = this.centerToBoard(x, y);
 		const rounded_world = this.centerToWorld(rounded.x, rounded.y);
@@ -243,10 +257,9 @@ class Scene {
 		return { x: rounded.x * 5 + this.edgeOnBoard[place], y: rounded.y + this.edgeOnBoard[place+1] };
 	}
 
-	// Converts between board matrix coords
-	// and real world coordinates (assumed z=0)
+	// Convert from board matrix coords to real world (assumed z=0)
 	centerToWorld(x, y) {
-		// center it, (3, 3) => (0,0)
+		// Center it, (3, 3) => (0,0)
 		x -= (y - this.center.y) * 0.5 + this.center.x;
 		y -= this.center.y;
 		y *= Scene.tileHeight;
@@ -262,7 +275,7 @@ class Scene {
 		return { x: x, y: y };
 	}
 
-	// Converts between canvas (x,y) and world (x,y,0)
+	// Convert canvas coords (x,y) to world (x,y,0) - expensive!
 	canvasToWorld(x, y) {
 		const invPV = mat4.create();
 		mat4.invert(invPV, this.projView);
@@ -274,11 +287,12 @@ class Scene {
 		return { x: v[0]/v[3], y: v[1]/v[3] };
 	}
 
+	// Update camera according to new cursor pos
 	updateCam(gl) {
 		this.viewRefresh = false;
 
 		if (!this.mouse.isTouch) {
-			// smoothing
+			// Smooth movement (distance cutoff)
 			const sq = (x) => x*x;
 			const resolution = 0.1;
 
@@ -315,8 +329,9 @@ class Scene {
 		this.setProjView(gl);
 	}
 
+	// Create a new projView matrix according to the camera pos and send it to the shader
 	setProjView(gl) {
-		// maybe create proj only once:
+		// Improve: create proj only once!
 		const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
 		const projectionMatrix = mat4.create();
 		const viewMatrix = mat4.create();
@@ -328,12 +343,14 @@ class Scene {
 		gl.uniform3fv(this.shader.uniforms.viewPos, this.cam.pos);
 	}
 
+	// Mouseover options -> array
 	getOptions(x, y) {
 		if (!this.clickables) return [];
 		if (typeof this.clickables[0] === 'string') return this.clickables;
 		return x >= 0 && y >= 0 && y < this.clickables.length && x < this.clickables[0].length ? this.clickables[y][x] : [];
 	}
 
+	// Main drawing routine
 	draw() {
 		const gl = this.gl;
 
@@ -355,7 +372,7 @@ class Scene {
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		if (this.viewRefresh) {
-			// something changed and we need to update projView
+			// Something changed and we need to update the projView matrix
 			this.updateCam(gl);
 
 			this.mouse.world = this.canvasToWorld(this.mouse.pos.x, this.mouse.pos.y); // expensive...
@@ -382,8 +399,8 @@ class Scene {
 
 	drawCursor() {
 		if (!this.mouse.sticky && this.mouse.cursorType) {
+			// robber
 			this.drawModel({
-				// robber
 				what: this.mouse.cursorType,
 				x: this.mouse.world.x,
 				y: this.mouse.world.y,
@@ -429,7 +446,6 @@ class Scene {
 	}
 
 	setupLights(gl) {
-		// Position and lights
 		this.backlight = new Light(gl, [0.15,0.15,0.15], [0.45,0.45,0.45], [0.15,0.15,0.15]);
 		this.backlight.turn(gl, [0.0, -0.3, 1.0], this.shader);
 
@@ -438,6 +454,7 @@ class Scene {
 		this.flashlight = new Light(gl, [0.0,0.0,0.0],[0.9,0.9,0.9], [0.1,0.1,0.1], 3.0, 0.001, 0.00016, Math.cos(12.5*Math.PI/180.0));
 	}
 
+	// Add figure (robber, pirate) on given center coord to the drawing queue
 	placeFigure(figure, x, y, isEditor) {
 		const c = this.centerToWorld(x, y);
 		const pirateTransform = mat4.fromScaling(mat4.create(), [2,2,2]);
@@ -445,25 +462,30 @@ class Scene {
 		this.addObject(figure, c.x, c.y, 0, 'black', [0.75, 0.0], figure == 'pirate' ? pirateTransform : null, isEditor ? x : null, isEditor ? y : null);
 	}
 
+	// Add a hexagon tile on given center coord to the drawing queue
 	placeHex(place, x, y, color, colorSat) {
-		// Editor stuff:
+		// Prepare special editor hexes
 		place = typeof place === 'string' ? { terrain: place } : place;
 		if ('_rnumber' in place)
 			place.number = place._rnumber;
 		if ('harbor' in place && '_rtype' in place.harbor)
 			place.harbor.type = place.harbor._rtype.replace('harbors','numbers');
-		// End
 
 		const normalize = (arr) => arr.map((v) => v / 255.0);
 		const oceanColor = normalize([165,217,242,128]);
 		const c = this.centerToWorld(x, y);
 
+		// Clear the pos and add the hex
 		this.remove('cursor');
-		this.remove(['hex','chip','triangle'], x, y); // assuming there is one
+		this.remove(['hex','chip','triangle'], x, y);
 		this.addObject(place.terrain, c.x, c.y, 0, color, colorSat, mat4.fromScaling(mat4.create(), [0.95, 0.95, 0.95]), x, y, 'hex');
+
+		// Number chip
 		if (place.number) {
 			this.addObject('chip_' + place.number, c.x, c.y, 0, 'ivory', [0,0.8], null, x, y, 'chip'); // '#c4b7a57a'
 		}
+
+		// Harbor chip and triangle
 		if (place.harbor) {
 			const rotation = mat4.fromZRotation(mat4.create(), place.harbor.direction * Math.PI / 3)
 			if (typeof place.harbor.type !== 'undefined') {
@@ -478,11 +500,11 @@ class Scene {
 
 		this.doAction = clickHandler;
 
-		// Shader:		
+		// Shader
 		await this.shader.load(gl, 'js/webgl/vertex.glsl', 'js/webgl/frag.glsl');
 		this.shader.use(gl);
 
-		// Cam:		
+		// Cam
 		const init_dist = 14.0
 		this.cam = { pos: [0.0, 0.0, init_dist], lookat: [0.0, 0.0, 0.0], dist: init_dist };
 
@@ -493,6 +515,7 @@ class Scene {
     	this.viewRefresh = true;
 	}
 
+	// Allow / disallow mouse events
 	mouseEvents(state) {
 		if (state) {
 			intercept();
@@ -516,14 +539,14 @@ class Scene {
 
 		$(window).on('resize.scene', this.onResize.bind(this));
 
-		// Pointer controls:
+		// Pointer controls
 		const updateTilt = () => {
 			const diff = { x: this.mouse.pos.x - this.mouse.last.x, y: this.mouse.pos.y - this.mouse.last.y };
 			this.mouse.tilt.x = Math.max(-0.6, Math.min(0.6, this.mouse.tilt.x + diff.x));
 			this.mouse.tilt.y = Math.max(-0.6, Math.min(0.6, this.mouse.tilt.y + diff.y));
 		};
 
-		// hybrid device hack:
+		// Hybrid device hack
 		var touched = false, touchTimer = null;
 		$(document).on('touchstart.scene', () => {
 			if (!this.mouse.isTouch) {
@@ -614,6 +637,7 @@ class Scene {
 			}).on('pointermove.scene', (e) => {
 				if (this.mouse.evt.length == 2) {
 					// 2 fingers are touching
+
 					this.mouse.evt[idx(e)] = e;
 					if (!this.mouse.pinch) {
 						this.mouse.pinch = pinchDist();
@@ -627,6 +651,8 @@ class Scene {
 						updateTilt();
 					}
 				} else {
+					// 1 finger movement
+
 					this.mouse.pos = normalizeMouse(e);
 					this.mouse.scr = { x: e.clientX, y: e.clientY };
 					const diff = { x: this.mouse.pos.x - this.mouse.last.x, y: this.mouse.pos.y - this.mouse.last.y };
@@ -652,8 +678,11 @@ class Scene {
 		}
 	}
 
+	// Store blueprints of models, so instances can be added to the queue via addObject
 	setupModels(gl) {
-		// Terrains:
+
+		// Terrains
+
 		const hex = ModelMaker.makeHex();
 		const terrain_names = [...Siedler.terrains, 'hidden', '_rterrains1', '_rterrains2', '_rterrains3', '_rterrains4', 'delete' ];
 		const terrain = terrain_names.pop();
@@ -663,7 +692,8 @@ class Scene {
 			(other) => this.models[other] = Model.clone(gl, this.models[terrain], "images/terrains/"+other+".jpg", "images/terrains/"+other+".jpg", 1.12)
 		);
 
-		// Figures:
+		// Figures and structures
+
 		const wood_diffuse = "images/wood.jpg";
 		const wood_specular = "images/wood.jpg";
 
@@ -686,10 +716,12 @@ class Scene {
 		const robber = ModelMaker.makeFigure();
 		this.models['robber'] = new Model(gl, robber.idx, robber.pos, robber.tex, robber.norm, wood_diffuse, wood_specular, 0.33, robber_transform);
 
-		this.models['background'] = new Model(gl, ModelMaker.background.idx, ModelMaker.background.pos, ModelMaker.background.tex, ModelMaker.background.norm, "images/background.jpg", "images/background.jpg", .5);
+		// The table
 
-		// Draw this one:
+		this.models['background'] = new Model(gl, ModelMaker.background.idx, ModelMaker.background.pos, ModelMaker.background.tex, ModelMaker.background.norm, "images/background.jpg", "images/background.jpg", .5);
 		this.addObject('background', 0, 0, 0);
+
+		// Chip and triangle
 
 		const chip = ModelMaker.makeDisc([0,0,0], 0.3, 0.05);
 		this.models['chip_2'] = new Model(gl, chip.idx, chip.pos, chip.tex, chip.norm, "images/numbers/2.png", "images/numbers/2.png", 0.33);

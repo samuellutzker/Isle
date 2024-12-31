@@ -1,5 +1,8 @@
 'use strict';
 
+// Various helper functions
+
+// Enable dragging for a DOM element
 const makeMovable = (what, callbackNewPos) => {
 	const f = function (e) {
 		$(this).off('pointerdown', f);
@@ -31,6 +34,7 @@ const makeMovable = (what, callbackNewPos) => {
 	$(what).addClass('movable').on('pointerdown', f);
 };
 
+// Block a list of event handlers
 // prevent: intercepts all these events (string seperated by ' ')
 // filter: intercepts these events, except those on children of the classes in except
 const intercept = function (prevent, filter, except) {
@@ -57,9 +61,6 @@ const intercept = function (prevent, filter, except) {
 		intercept.args.filter.forEach((x) => window.addEventListener(x, intercept.filterEvents, {capture: true, passive: false}));
 	}
 };
-
-
-
 
 const closeDialog = () => dialog();
 

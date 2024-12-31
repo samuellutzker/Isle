@@ -1,5 +1,7 @@
 'use strict';
 
+// Interface class: Handlers for the options of the main menu
+
 class Interface {
     static isFullscreen() {
         return document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen;
