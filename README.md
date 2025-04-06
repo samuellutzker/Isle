@@ -2,9 +2,8 @@
 
 Thanks for stopping by!
 
-This web-based adaptation of the base game and Seafarers extension of Catan by Klaus Teuber was developed in 2023/24, for private, non-commercial use only.
-The main purpose of making yet another implementation of this game was dabbling around with WebGL, WebRTC, WebSocket and a big appreciation of the game.
-If you like it, buy the board game!
+This is a fan-made, web-based game inspired by a well-known board game involving resource trading, settlement building, and exploration at sea. It was developed in 2023/24 for private, non-commercial use only, primarily as a project to experiment with WebGL, WebRTC, and WebSockets – and out of great appreciation for the original.
+If you enjoy this kind of game, please consider supporting the official version by purchasing the real board game!
 
 # Use
 
