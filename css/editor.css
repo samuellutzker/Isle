@@ -1,0 +1,41 @@
+#harbor_direction,
+#fixed_number, 
+#terrain_pile, 
+#resource_pile,
+#terrain_dlg:not(.water) #with_harbor,
+#hidden_pile, 
+#fixed_harbor, 
+#terrain_hidden,
+#terrain_dlg.random #select_pile option[value=fixed],
+#terrain_dlg.water.harbor.fixed #resource_pile,
+#terrain_dlg.nonumber #select_pile,
+#terrain_dlg.nonumber label[for=select_pile],
+#terrain_dlg.nonumber #number_pile,
+#terrain_dlg.nothing #terrain_hidden,
+#terrain_dlg.nothing #terrain_init,
+#terrain_dlg.nothing #terrain_reward,
+#terrain_dlg.fixed #number_pile,
+#terrain_dlg.fixed.water.harbor #fixed_number {
+    display: none;
+}
+
+#terrain_dlg.water.harbor.fixed #fixed_harbor, 
+#terrain_dlg.water.harbor #harbor_direction,
+#terrain_dlg.water.harbor #select_pile,
+#terrain_dlg.water.harbor label[for=select_pile],
+#terrain_dlg.random #select_pile,
+#terrain_dlg.random label[for=select_pile],
+#terrain_dlg.random #terrain_pile,
+#terrain_dlg.water.harbor #resource_pile,
+#terrain_dlg.random #hidden_pile,
+#terrain_dlg.random #terrain_hidden,
+#terrain_dlg.fixed #fixed_number {
+    display: inline;
+}
+
+.pile > span {
+    display: inline-block;
+}
+.pile > span > * {
+    display: block;
+}

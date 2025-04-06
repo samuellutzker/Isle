@@ -1,0 +1,251 @@
+@media 
+only screen and (max-width: 600px),
+only screen and (max-height: 600px) {
+    div#main {
+        text-align: center;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    div#controls {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        text-align: center;
+        width: 100%;
+        margin: 0;
+        padding: 5px;
+    }
+
+    body.playing div#controls {
+        top: 4em;
+        transform: none;
+        text-align: right;
+    }
+
+    div.person {
+        display: inline-block;
+        vertical-align: top;
+        position: relative;
+        top: auto !important;
+        left: auto !important;
+        font-size: 4vmin !important;
+    }
+    div.person.myself {
+        min-width: 0;
+    }
+    div.person div.face:before {
+        display: none;
+    }
+    div.person.person div.halo, 
+    div.person div.face {
+        position: static;
+        vertical-align: top;
+        width: 90% !important;
+        height: 90% !important;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 5%;
+        border-radius: 0;
+        border-width: 0;
+        box-shadow: none;
+    }
+    div.person {
+        background-color: var(--player-color);
+    }
+    div.person.person div.face,
+    body:not(.playing) div.person.myself div.face {
+        width: 100% !important;
+        height: 100% !important;
+        box-shadow: 2px 2px 5px black;
+        background-color: rgba(0,0,0,0.3);
+    }
+    div.person.selected div.face {
+        box-shadow: none;
+        background-color: transparent;
+    }
+    div.person video {
+        position: relative;
+    }
+    div.person > div.body {
+        vertical-align: top;
+        left: 0;
+        bottom: 100%;
+        border-radius: 0;
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        border-width: 0;
+        margin-bottom: -1px;
+        min-width: 0;
+        top: auto;
+        box-shadow: none;
+        overflow: hidden;
+        position: absolute;
+        background-color: var(--player-color);
+    }
+    div.person.selected:not(.clickable) {
+        z-index: 9;
+    }
+    div.person.active:not(.clickable) {
+        z-index: 8;
+    }
+    div.person.active div.halo {
+        animation: glowing-player-mobile 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    body.playing div.person.selected > div.body {
+        position: fixed;
+        border-width: 3px;
+        border-radius: 5px;
+        width: 95%;
+        bottom: 10%;
+        margin-right: auto;
+        margin-left: auto;
+    }
+    div.person.selected > div.body > div.container {
+        width: 100%;
+        white-space: normal;
+    }
+    div.person > div.body > div.container > * {
+        display: none;
+        width: 100%;
+    }
+    div.person.selected div.body > div.container > * {
+        display: block;
+    }
+    div.person > div.body > div.nametag {
+        display: inline-block;
+    }
+    div.person.myself.myself {
+        border: 3px solid var(--player-text-color);
+    }
+
+    div#dialog.wide {
+/*		min-width: 95%;*/
+        width: 97%;
+    }
+    div#dialog.wide > div {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    div#message {
+        max-width: none;
+        width: 95%;
+        padding-left: 1em;
+        padding-right: 1em;
+    }
+
+    span#logo {
+        width: 100%;
+        margin: 1em 0;
+    }
+
+    body.playing span#logo {
+        display: none;
+    }
+
+    body.playing input[type=checkbox]#checkbox_controls ~ label[for="checkbox_controls"] {
+        color: white;
+        font-size: 3em;
+    }
+    body.playing input[type=checkbox]#checkbox_controls:checked ~ label[for="checkbox_controls"] {
+        color: var(--window-color);
+    }
+
+    div.person.person div.banner {
+        bottom: 130%;
+        text-align: left;
+    }
+
+    div.person div.stuff {
+        position: fixed;
+        top: 4em;
+        left: .2em;
+        height: auto;
+    }
+
+    div.person.person span.bubble {
+        position: fixed;
+        bottom: 13%;
+        left: 0;
+        right: 0;
+        white-space: normal;
+        text-align: center;
+        color: var(--player-color);
+        text-shadow: 2px 2px 5px black;
+    }
+
+    div.person {
+        width: 23% !important;
+        height: 10% !important;
+        margin: 3px;
+    }
+}
+
+@media only screen and (max-width: 600px) and (orientation: portrait) {
+    body.person-selected div.person div.banner {
+        bottom: calc(100% + 8em);
+    }
+}
+
+/* landscape */
+
+@media only screen and (max-height: 600px) and (orientation: landscape) {
+    div#message {
+        width: 50%;
+    }
+
+    div.person div.banner {
+        bottom: auto;
+        left: 100%;
+        top: 0;
+    }
+
+    div#main {
+        text-align: center;
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    body.playing div.person.selected > div.body {
+        width: 20em;
+        bottom: 1%;
+        margin-right: 1%;
+        top: auto;
+    }
+
+    div.person {
+        width: 10% !important;
+        height: 20% !important;
+        margin: 1.3em 0 0 0;
+    }
+    
+    div.person div.stuff {
+        left: 11%;
+    }
+
+    div.person.person span.bubble {
+        bottom: 0;
+    }
+
+    span#logo {
+        margin: 3px;
+    }
+}
+
+
+@keyframes glowing-player-mobile {
+    0%, 100% {
+        background-color: var(--player-color);
+        box-shadow: 0 0 25px transparent;
+    }
+
+    50% {
+        background-color: var(--player-text-color);
+        color: var(--player-color);
+        box-shadow: 0 0 25px var(--player-color);
+    }
+}
