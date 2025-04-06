@@ -1,4 +1,4 @@
-@media 
+@media
 only screen and (max-width: 600px),
 only screen and (max-height: 600px) {
     div#main {
@@ -32,13 +32,16 @@ only screen and (max-height: 600px) {
         left: auto !important;
         font-size: 4vmin !important;
     }
+
     div.person.myself {
         min-width: 0;
     }
+
     div.person div.face:before {
         display: none;
     }
-    div.person.person div.halo, 
+
+    div.person.person div.halo,
     div.person div.face {
         position: static;
         vertical-align: top;
@@ -51,9 +54,11 @@ only screen and (max-height: 600px) {
         border-width: 0;
         box-shadow: none;
     }
+
     div.person {
         background-color: var(--player-color);
     }
+
     div.person.person div.face,
     body:not(.playing) div.person.myself div.face {
         width: 100% !important;
@@ -61,13 +66,16 @@ only screen and (max-height: 600px) {
         box-shadow: 2px 2px 5px black;
         background-color: rgba(0,0,0,0.3);
     }
+
     div.person.selected div.face {
         box-shadow: none;
         background-color: transparent;
     }
+
     div.person video {
         position: relative;
     }
+
     div.person > div.body {
         vertical-align: top;
         left: 0;
@@ -84,15 +92,19 @@ only screen and (max-height: 600px) {
         position: absolute;
         background-color: var(--player-color);
     }
+
     div.person.selected:not(.clickable) {
         z-index: 9;
     }
+
     div.person.active:not(.clickable) {
         z-index: 8;
     }
+
     div.person.active div.halo {
         animation: glowing-player-mobile 2s cubic-bezier(0, 0, 0.2, 1) infinite;
     }
+
     body.playing div.person.selected > div.body {
         position: fixed;
         border-width: 3px;
@@ -102,20 +114,25 @@ only screen and (max-height: 600px) {
         margin-right: auto;
         margin-left: auto;
     }
+
     div.person.selected > div.body > div.container {
         width: 100%;
         white-space: normal;
     }
+
     div.person > div.body > div.container > * {
         display: none;
         width: 100%;
     }
+
     div.person.selected div.body > div.container > * {
         display: block;
     }
+
     div.person > div.body > div.nametag {
         display: inline-block;
     }
+
     div.person.myself.myself {
         border: 3px solid var(--player-text-color);
     }
@@ -124,6 +141,7 @@ only screen and (max-height: 600px) {
 /*		min-width: 95%;*/
         width: 97%;
     }
+
     div#dialog.wide > div {
         padding-left: 0;
         padding-right: 0;
@@ -149,6 +167,7 @@ only screen and (max-height: 600px) {
         color: white;
         font-size: 3em;
     }
+
     body.playing input[type=checkbox]#checkbox_controls:checked ~ label[for="checkbox_controls"] {
         color: var(--window-color);
     }
@@ -222,7 +241,7 @@ only screen and (max-height: 600px) {
         height: 20% !important;
         margin: 1.3em 0 0 0;
     }
-    
+
     div.person div.stuff {
         left: 11%;
     }

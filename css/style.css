@@ -106,7 +106,6 @@ body.playing span#logo {
     font-size: 5em;
 }
 
-
 /* controls */
 
 body #main label[for="checkbox_controls"] {
@@ -169,7 +168,6 @@ label, span.custom-label {
     font-size: 0.9em;
 }
 
-
 div#main {
     display: inline-block;
     width: 100%;
@@ -225,7 +223,7 @@ div.person.clickable div.halo {
     box-shadow: 0 0 25px white;
 }
 
-body:not(.playing) div.person.selected:not(.myself) div.halo, 
+body:not(.playing) div.person.selected:not(.myself) div.halo,
 div.person.clickable:hover div.halo {
     /*
     background: var(--player-text-color);
@@ -606,6 +604,7 @@ button, select, input, .btn, input[type=checkbox] + label, input[type=radio] + l
     box-shadow: 2px 1px 4px rgba(0,0,0,.4);
     line-height: 1.7;
 }
+
 input[type=checkbox] + label, input[type=radio] + label {
     border-radius: 100%;
 }
@@ -649,7 +648,7 @@ input[type=checkbox] + label:after,
 input[type=radio] + label:after {
     visibility: hidden;
 }
-input[type=checkbox]:checked + label:after, 
+input[type=checkbox]:checked + label:after,
 input[type=radio]:checked + label:after {
     visibility: visible;
 }

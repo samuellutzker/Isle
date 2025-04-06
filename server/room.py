@@ -7,11 +7,9 @@ from editor import Editor
 from tools import log, GameError
 
 class Room:
-
     capacity = 4
-
     all = {} # room_name -> room
-    
+
     @staticmethod
     def open(room_name):
         return Room.all[room_name] if room_name in Room.all else Room(room_name)
@@ -42,7 +40,7 @@ class Room:
                     pass
 
     # sends broadcast from sender(id) to room. echo is True for the sender
-    async def broadcast(self, sender=None, **msg): 
+    async def broadcast(self, sender=None, **msg):
         for i in self.members.copy():
             if not self.members[i].alive: continue
             try:
@@ -63,7 +61,7 @@ class Room:
             raise GameError('Sorry, room is full.')
 
         if not proper(self.name) or not proper(user.name):
-            if not proper(self.name) or len(self.members) == 0: 
+            if not proper(self.name) or len(self.members) == 0:
                 self.remove()
             raise GameError('Choose a proper name, please (only alphanumeric, no whitespace).')
 

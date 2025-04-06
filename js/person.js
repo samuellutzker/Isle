@@ -163,8 +163,6 @@ class Person {
         this.$el.css('--player-color', color).css("--player-text-color", textColor);
     }
 
-
-
     adjustPos() {
         const f = Math.floor;
         const scr = Person.#screen();

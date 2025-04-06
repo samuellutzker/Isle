@@ -78,7 +78,7 @@ class Shader {
             }
             else
             {
-                this.uniforms[name] = gl.getUniformLocation(program, name);	
+                this.uniforms[name] = gl.getUniformLocation(program, name);
             }
         }
         this.ready = true;

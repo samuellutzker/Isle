@@ -120,10 +120,10 @@ class Editor {
         }
         Server.query({
             do: 'editor', what: {
-                ...boardPos, 
+                ...boardPos,
                 action: 'board',
                 hex: this.hex
-            } 
+            }
         });
     }
 
@@ -179,12 +179,12 @@ class Editor {
         html += '</select></p>';
 
         html += `<p id='terrain_pile' class='pile'>`;
-        Siedler.terrains.forEach((x) => 
+        Siedler.terrains.forEach((x) =>
             html += `<span><label for='terrain_${x}'>${capital(x)}</label><input type='number' value=0 min=0 max=99 step=1 id='terrain_${x}' /></span>`);
         html += '</p>';
 
         html += `<p id='resource_pile' class='pile'>`;
-        resources.forEach((x) => 
+        resources.forEach((x) =>
             html += `<span><label for='resource_${x}'>${capital(x)}</label><input type='number' value=0 min=0 max=99 step=1 id='resource_${x}' /></span>`);
         html += '</p>';
 
@@ -201,7 +201,7 @@ class Editor {
             const harbor = $("#checkbox_with_harbor").is(":checked");
 
             this.selected = $('#select_terrain').val();
-            this.hex = { 
+            this.hex = {
                 terrain: this.selected,
                 init: init,
                 reward: reward
@@ -232,11 +232,11 @@ class Editor {
                 // Update the pile and make cursor attached.
                 const name = "terrains"+this.pileIdx;
                 const content = [];
-                Siedler.terrains.forEach((x) => 
+                Siedler.terrains.forEach((x) =>
                     content.push([
-                        { 
-                            terrain: x, 
-                            hidden: hidden, 
+                        {
+                            terrain: x,
+                            hidden: hidden,
                             init: !hidden & init,
                             reward: reward,
                             _rnumber: !['water','desert'].includes(x) ? `numbers${this.pileIdx}` : null
@@ -247,13 +247,13 @@ class Editor {
             } else if (this.selected == 'delete') {
                 this.hex = null;
 
-            } 
+            }
 
             if (!['desert','delete','water'].includes(this.selected)) {
                 if ($('#select_pile').val() != 'fixed') {
                     const name = "numbers"+$("#select_pile").val();
                     const content = [];
-                    [2,3,4,5,6,8,9,10,11,12].forEach((x) => 
+                    [2,3,4,5,6,8,9,10,11,12].forEach((x) =>
                         content.push([x, parseFloat($(`#number_${x}`).val())]));
                     Server.query({ do: 'editor', what: { action: 'pile', name: `_e_s${name}`, content: content }});
                     if (this.selected != 'random')
@@ -336,7 +336,7 @@ class Editor {
                         $(`#terrain_${pile[t][0]['terrain']}`).val(pile[t][1]);
                     }
                 }
-                
+
                 if (`_e_snumbers${this.pileIdx}` in this.situation) {
                     const pile = this.situation[`_e_snumbers${this.pileIdx}`];
                     for (let n in pile) {
@@ -365,7 +365,6 @@ class Editor {
 
         }, "wide");
     }
-
 
     setupButtons() {
         Person.myself.$el.find(".container").html("<div class='options'></div>");
@@ -402,9 +401,9 @@ class Editor {
 
     save() {
         const scenario = $("#dlg_save_name").val();
-        Server.query({ do: 'editor', what: { 
-            action: 'save', 
-            name: scenario, 
+        Server.query({ do: 'editor', what: {
+            action: 'save',
+            name: scenario,
             vp_limit: parseFloat($("#dlg_save_vp").val()),
             reward_discovery: $("#checkbox_reward_terrain").is(":checked"),
             reward_island: parseFloat($("#input_island_bonus").val()),
@@ -437,7 +436,7 @@ class Editor {
             if (!this.isRunning || !this.scene)
                 return;
             this.scene.draw();
-            requestAnimationFrame(render);		
+            requestAnimationFrame(render);
         }
         requestAnimationFrame(render);
     }
@@ -461,7 +460,7 @@ class Editor {
 
         for (let y in situation.board) {
             for (let x in situation.board[y]) {
-                if (situation.board[y][x]) 
+                if (situation.board[y][x])
                     this.setHex(situation.board[y][x], Number(x)-situation.shift_x, Number(y)-situation.shift_y);
                 else
                     this.scene.placeHex({terrain: 'hidden'}, Number(x)-situation.shift_x, Number(y)-situation.shift_y, Scene.nameToRgba("transparent"), [0.8, 0]);

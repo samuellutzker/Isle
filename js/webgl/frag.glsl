@@ -23,7 +23,7 @@ struct Light {
     float cutoff; // point-light: cutoff = -1.0f
 };
 
-uniform vec4 color; 
+uniform vec4 color;
 uniform vec2 colorSat; // bg and fg color. x-component: foreground intensity
 uniform vec3 viewPos;
 uniform Material material;
@@ -36,7 +36,7 @@ vec3 calcPointLight(Light light, vec3 viewDir, vec3 texDiff);
 void main() {
     vec3 result = vec3(0.0);
     vec4 tex = texture(material.diffuse, fTex);
-    
+
     vec3 texDiff = mix(vec3(tex), vec3(color), (1.0 - tex.w) * colorSat.y); // background
     texDiff = mix(texDiff, vec3(color), colorSat.x); // foreground
     float alpha = max(tex.w, color.w * colorSat.y) * (1.0 - colorSat.x * (1.0 - color.w)); // opacity
@@ -55,7 +55,7 @@ vec3 calcDirLight(Light light, vec3 viewDir, vec3 texDiff) {
     // diffuse
     vec3 norm = normalize(fNorm);// changed to -norm for some reason
     vec3 lightDir = normalize(light.dir);
-    float diff = max(dot(norm, lightDir), 0.0); 
+    float diff = max(dot(norm, lightDir), 0.0);
 
     // specular
     vec3 reflectDir = -reflect(lightDir, norm);

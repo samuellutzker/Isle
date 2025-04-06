@@ -58,7 +58,6 @@
             }
         ?>
 
-
         <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
         <script src="js/lib/jquery-3.7.1.min.js"></script>
         <script src="js/lib/gl-matrix-min.js"></script>

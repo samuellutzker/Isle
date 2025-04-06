@@ -5,7 +5,6 @@ class GameError(Exception):
         self.message = message
         super().__init__(self.message)
 
-
 def log(*x):
     print(time.strftime("[%d.%m.%Y %H:%M.%S]"), *x)
 

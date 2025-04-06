@@ -35,7 +35,7 @@ class Room {
             this.#users[i].remove();
             delete this.#users[i];
         }
-        if (this.#game) 
+        if (this.#game)
             this.#game.leave();
         $("body").removeClass("logged-in");
         this.#ok = false;
@@ -95,7 +95,6 @@ class Room {
             }
         } else if (obj.at == 'user') {
             this.#users[obj.id].update(obj);
-            
         } else if ((obj.at == 'game' || obj.at == 'editor') && this.#game) {
             await this.#game.update(obj);
         }

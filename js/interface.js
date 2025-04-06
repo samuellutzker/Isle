@@ -50,8 +50,8 @@ class Interface {
             <p>To view the rules, or a short overview of building prices click the options below.</p>`;
 
         dialog("ISLE to go", html, {
-            "Close" : null, 
-            "Prices" : () => dialog("Building Prices", $("#info").html(), null, null, 'wide'), 
+            "Close" : null,
+            "Prices" : () => dialog("Building Prices", $("#info").html(), null, null, 'wide'),
             "Rules" : () => dialog("View Rules", "<p>Display the rules of the Catan base game, or the Seafarers extension?</p>", {
                 "Base" : () => window.open('https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf'),
                 "Seafarers" : () => window.open('https://www.catan.com/sites/default/files/2021-06/catan-seafarers_2021_rule_book_201201.pdf'),
@@ -72,13 +72,13 @@ class Interface {
                 <p>Click pause if you want to continue the game later.
                 You may resume playing with the address in the navigation bar and clipboard.</p>`;
 
-            dialog("Leave game", html, { 
-                "Pause" : () => { 
+            dialog("Leave game", html, {
+                "Pause" : () => {
                     if (navigator.clipboard) {
-                        navigator.clipboard.writeText(window.location.href); 
+                        navigator.clipboard.writeText(window.location.href);
                     }
-                    leave(); 
-                }, 
+                    leave();
+                },
                 "Stop" : Siedler.stop,
                 "Cancel" : null
             }, null, 'wide');
@@ -190,7 +190,7 @@ class Interface {
 
         if (user && room && key) {
             this.#enterRoom(user, room, key);
-        } 
+        }
     }
 }
 

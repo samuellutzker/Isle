@@ -51,7 +51,7 @@ class Server {
             this.#socket = new WebSocket(this.#url);
             this.#socket.onopen = async () => {
                 // console.log(`open event. buffered ${Server.#failed.length} queries.`);
-    
+
                 this.#socket.onclose = this.#reconnect;
 
                 Server.#failed.forEach((q) => Server.query(q));

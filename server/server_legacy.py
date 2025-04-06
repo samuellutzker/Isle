@@ -9,7 +9,6 @@ from tools import log, GameError
 
 local_ws = True
 
-
 async def handler(socket, path):
 
     async def error(msg):
@@ -37,7 +36,7 @@ async def handler(socket, path):
         if act == 'enter':
             if 'room' not in query or 'name' not in query:
                 continue
-                
+
             room_name = query['room']
             user_name = query['name']
             key = query.get('key')
@@ -91,10 +90,9 @@ async def handler(socket, path):
 
                 else:
                     log(f'Received illegal query: {data}')
-                    
+
             except GameError as e:
                 await error(e)
-
 
 if local_ws:
     # WS:
@@ -104,7 +102,6 @@ else:
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ctx.load_cert_chain('server/cert/fullchain.pem', 'server/cert/privkey.pem')
     start_server = websockets.serve(handler, "0.0.0.0", 8765, ssl=ctx)
-
 
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()

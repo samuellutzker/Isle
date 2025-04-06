@@ -156,4 +156,3 @@ class Editor:
             await self.room.update_scenarios()
         except Exception as e:
             raise GameError(f'Error occurred, could not save {name}.')
-

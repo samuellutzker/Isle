@@ -11,10 +11,10 @@ class VideoConn {
 
     // RTCPeerConnection configuration:
     static #mediaConstraints = {
-        video: { 
-            mandatory: { 
-                maxWidth: 320, 
-                maxHeight: 240 
+        video: {
+            mandatory: {
+                maxWidth: 320,
+                maxHeight: 240
             }
         },
         audio: true
@@ -82,9 +82,9 @@ class VideoConn {
         $(".myself").removeClass('video').find('video').remove();
 
         if (VideoConn.#localStream) {
-            VideoConn.#localStream.getTracks().forEach((track) => { 
-                track.stop(); 
-                this.#localStream.removeTrack(track); 
+            VideoConn.#localStream.getTracks().forEach((track) => {
+                track.stop();
+                this.#localStream.removeTrack(track);
             });
         }
 
@@ -143,7 +143,6 @@ class VideoConn {
     }
 
     async receive(msgs) {
-
         const msg = JSON.parse(msgs);
 
         switch (msg.type) {
@@ -170,7 +169,7 @@ class VideoConn {
 
             case 'restart' :
                 console.log('VideoConn: received restart.');
-                // reconnect process: 
+                // reconnect process:
                 // 1) initiator sends restart after removing his connection
                 // 2) passive user sends restart after removing his connection
                 // 3) initiator calls
@@ -192,7 +191,6 @@ class VideoConn {
                 break;
         }
     }
-
 
     #heartbeat() {
         const heartbeatInterval = 1000;
@@ -222,7 +220,6 @@ class VideoConn {
             this.#ping.send('ping');
         }
     }
-
 
     #createPc() {
         const pc = new RTCPeerConnection(VideoConn.#pcConfig);
@@ -268,9 +265,9 @@ class VideoConn {
             delete VideoConn.#all[this.#id];
 
             if (this.#remoteStream) {
-                this.#remoteStream.getTracks().forEach((track) => { 
-                    track.stop(); 
-                    this.#remoteStream.removeTrack(track); 
+                this.#remoteStream.getTracks().forEach((track) => {
+                    track.stop();
+                    this.#remoteStream.removeTrack(track);
                 });
                 this.#remoteStream = null;
             }
@@ -282,7 +279,7 @@ class VideoConn {
             this.#pc.close();
             if (this.#pingTimer) {
                 clearTimeout(this.#pingTimer);
-                this.#pingTimer = null; 
+                this.#pingTimer = null;
             }
         }
     }
@@ -331,7 +328,7 @@ class VideoConn {
                 break;
 
             case 'ping' :
-                this.#ping = event.channel;        
+                this.#ping = event.channel;
                 this.#ping.onmessage = this.#heartbeat.bind(this);
                 this.#ping.onopen = () => {
                     if (this.#isInitiator) {

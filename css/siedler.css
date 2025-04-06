@@ -102,19 +102,21 @@ div.card {
     background: ivory;
     border-radius: 7px;
     border: 3px solid lightgray;
-    box-shadow: 2px 2px 15px rgba(0,0,0,0.4);    
+    box-shadow: 2px 2px 15px rgba(0,0,0,0.4);
     display: inline-block;
     height: 12em;
     width: 7em;
     color: black;
     vertical-align: top;
 }
+
 div.card div {
     font-style: italic;
     text-align: center;
 }
+
 div.card.clickable {
-    cursor: pointer;    
+    cursor: pointer;
 }
 
 .person div.card {
@@ -188,12 +190,6 @@ div#dialog div#storageDlg .icon {
     font-size: 1.2em;
 }
 
-/* 
-div#storage_dlg .have {
-
-} 
-*/
-
 div#dialog div.icon {
     width: auto;
 }
@@ -238,6 +234,7 @@ div.banner {
     -ms-user-select: none; /* IE 10 and IE 11 */
     text-align: right;
 }
+
 div.person.right div.banner {
     text-align: left;
 }
@@ -278,6 +275,7 @@ div.structure svg {
     display: inline-block;
     text-align: center;
 }
+
 div.structure h2 {
     display: inline-block;
     font-family: 'Playfair Display';
@@ -311,11 +309,13 @@ div#point_action {
     border: 3px solid white;
     border-radius: 3px;
 }
+
 div#point_action div.structure {
     cursor: pointer;
     width: auto;
     border-color: white;
 }
+
 div#point_action div.structure:hover {
     background: white;
     color: black;

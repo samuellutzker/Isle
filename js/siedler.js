@@ -5,7 +5,7 @@
 class Siedler {
     static isSoundOn = true;
     static sounds = {};
-    static terrains = [ 'water', 'mountains', 'hills', 'forest', 'pasture', 'fields', 'desert', 'river' ]; 
+    static terrains = [ 'water', 'mountains', 'hills', 'forest', 'pasture', 'fields', 'desert', 'river' ];
     static resources = [ 'lumber', 'brick', 'wool', 'grain', 'ore' ];
 
     static audioPreload(audioFiles) {
@@ -220,7 +220,7 @@ class Siedler {
 
     setupBoard(situation) {
         this.scene.setCenter(situation.width / 2, situation.height / 2);
-        
+
         // Setup landscape
         for (let y in situation.board)
             for (let x in situation.board[y])
@@ -263,7 +263,7 @@ class Siedler {
             if (!this.isRunning || !this.scene)
                 return;
             this.scene.draw();
-            requestAnimationFrame(render);		
+            requestAnimationFrame(render);
         }
         requestAnimationFrame(render);
     }
@@ -291,10 +291,10 @@ class Siedler {
                 $("#point_action").append($(`#${options[i]}`).clone());
                 $(`#point_action #${options[i]}`).on('click', () => Server.query({
                     do: 'game', what: {
-                        ...boardPos, 
+                        ...boardPos,
                         action: 'build',
                         structure: options[i]
-                    } 
+                    }
                 }));
             }
 
@@ -369,7 +369,7 @@ class Siedler {
                 html += `<div class='icon bg ${key}' data-resource='${key}'></div>`;
             });
             html += '</div>';
-            dialog("Select resources", html, { 
+            dialog("Select resources", html, {
                 "OK": () => {
                     Server.query({ do: "game", what: { action: "exchange", resources: this.storageDlg }});
                 },
@@ -384,7 +384,7 @@ class Siedler {
         $(".dice, .card, .popup").remove();
         if (dice) {
             this.players[this.activeId].$el.find('.stuff').prepend(`<div class='dice one'></div><div class='dice two'></div>`);
-            $(".dice").each(function (i) { 
+            $(".dice").each(function (i) {
                 $(this).css('background-image', `url('images/dice/${dice[i]}.jpg')`);
             });
         }
@@ -394,7 +394,7 @@ class Siedler {
     selectPlayer(clickable, description) {
         message(true, description);
         Person.select();
-        
+
         const f = (e) => {
             message();
             $("#curtain").remove();
@@ -414,8 +414,8 @@ class Siedler {
         if (!card) {
             // Buy a card
             const buy = `
-                Server.query({ do: "game", what: { action: "card", buy: true }}); 
-                closeDialog(); 
+                Server.query({ do: "game", what: { action: "card", buy: true }});
+                closeDialog();
                 Server.query({ do: "game", what: { action: "card", get: true }});`;
             return `
                 <div title='Buy card' class='card clickable' onclick='${buy}'>
@@ -426,12 +426,12 @@ class Siedler {
                         <div class='icon ore'></div>
                     </div>
                 </div>`;
-            
+
         } else {
             // Display existing card
             return `
                 <div title='${card.title}' class='card ${card.type}`
-                + (index 
+                + (index
                     ? ` clickable' onclick='Server.query({ do: "game", what: { action: "card", use: ${index} }}); closeDialog();'>`
                     : `'>`)
                 +

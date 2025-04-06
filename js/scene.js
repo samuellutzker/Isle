@@ -67,7 +67,7 @@ class Scene {
         this.queue = [];
         this.projView = mat4.create();
         this.viewRefresh = true;
-        this.mouse = { 
+        this.mouse = {
             isTouch: matchMedia('(hover: none), (pointer: coarse)').matches,
             over: true, 	// Mouse is on screen
             cursorOn: matchMedia('(hover: none), (pointer: coarse)').matches,
@@ -91,26 +91,26 @@ class Scene {
         this.models = {};
 
         // Structures for the shader:
-        const attribs = { 
-            vPos: null, 
-            vTex: null, 
-            vNorm: null 
+        const attribs = {
+            vPos: null,
+            vTex: null,
+            vNorm: null
         };
-        
-        const uniforms = { 
+
+        const uniforms = {
             color: null,
             colorSat: null,
-            model: null, 
-            projView: null, 
+            model: null,
+            projView: null,
             normal: null,
-            viewPos: null, 
-            material: { 
-                diffuse: null, 
-                specular: null, 
-                shininess: null 
+            viewPos: null,
+            material: {
+                diffuse: null,
+                specular: null,
+                shininess: null
             }
         };
-        
+
         this.shader = new Shader(this.gl, attribs, uniforms);
 
         Light.reset();
@@ -133,7 +133,7 @@ class Scene {
     onResize() {
         const dpr = window.devicePixelRatio;
         let {width, height} = this.canvas.getBoundingClientRect();
-        width *= dpr; 
+        width *= dpr;
         height *= dpr;
 
         $(this.canvas)
@@ -335,7 +335,7 @@ class Scene {
         const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         const projectionMatrix = mat4.create();
         const viewMatrix = mat4.create();
- 
+
         mat4.perspective(projectionMatrix, this.fieldOfView, aspect, this.zNear, this.zFar);
         mat4.lookAt(viewMatrix, this.cam.pos, this.cam.lookat, [0,1,0]);
         mat4.multiply(this.projView, projectionMatrix, viewMatrix);
@@ -528,7 +528,7 @@ class Scene {
     setupEvents() {
         const normalizeMouse = (e) => {
             let offs = $(this.canvas).offset();
-            return { 
+            return {
                 x : 2.0 * (e.clientX - offs.left) / $(this.canvas).width() - 1.0,
                 y : 1.0 - 2.0 * (e.clientY - offs.top) / $(this.canvas).height()
             };
@@ -602,8 +602,8 @@ class Scene {
                 }
                 this.mouse.down = null;
 
-            }).on('pointerout.scene', () => { 
-                this.mouse.over = false; 
+            }).on('pointerout.scene', () => {
+                this.mouse.over = false;
                 this.viewRefresh = true;
 
             }).on('pointerover.scene', () => this.mouse.over = true);
@@ -612,7 +612,7 @@ class Scene {
 
             // Touch events
 
-            const idx = (e) => { 
+            const idx = (e) => {
                 for (let i=0; i < this.mouse.evt.length; ++i)
                     if (this.mouse.evt[i].pointerId == e.pointerId)
                         return i;
@@ -628,7 +628,7 @@ class Scene {
                 } else return normalizeMouse(this.mouse.evt[0]);
             };
 
-            $(this.canvas).on('pointerdown.scene', (e) => { 
+            $(this.canvas).on('pointerdown.scene', (e) => {
                 this.mouse.evt.push(e);
                 this.mouse.down = this.mouse.last = this.mouse.pos = normalizeMouse(e);
                 this.viewRefresh = true;

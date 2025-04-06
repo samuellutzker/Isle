@@ -1,10 +1,10 @@
 #harbor_direction,
-#fixed_number, 
-#terrain_pile, 
+#fixed_number,
+#terrain_pile,
 #resource_pile,
 #terrain_dlg:not(.water) #with_harbor,
-#hidden_pile, 
-#fixed_harbor, 
+#hidden_pile,
+#fixed_harbor,
 #terrain_hidden,
 #terrain_dlg.random #select_pile option[value=fixed],
 #terrain_dlg.water.harbor.fixed #resource_pile,
@@ -19,7 +19,7 @@
     display: none;
 }
 
-#terrain_dlg.water.harbor.fixed #fixed_harbor, 
+#terrain_dlg.water.harbor.fixed #fixed_harbor,
 #terrain_dlg.water.harbor #harbor_direction,
 #terrain_dlg.water.harbor #select_pile,
 #terrain_dlg.water.harbor label[for=select_pile],

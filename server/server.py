@@ -9,7 +9,6 @@ from tools import log, GameError
 
 local_ws = False
 
-
 async def handler(socket):
 
     async def error(msg):
@@ -37,7 +36,7 @@ async def handler(socket):
         if act == 'enter':
             if 'room' not in query or 'name' not in query:
                 continue
-                
+
             room_name = query['room']
             user_name = query['name']
             key = query.get('key')
@@ -91,7 +90,7 @@ async def handler(socket):
 
                 else:
                     log(f'Received illegal query: {data}')
-                    
+
             except GameError as e:
                 await error(e)
 

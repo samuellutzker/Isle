@@ -36,16 +36,15 @@ class Siedler:
         self.setup_cards()
         self.setup_queue()
 
-
     class Player:
         def __init__(self, parent, user, idx):
-            self.user = user;
+            self.user = user
             self.parent = parent
             self.id = user.id
             self.idx = idx
             self.name = user.name
             self.color = user.color
-            self.storage = (dict(lumber=20, brick=20, wool=20, grain=20, ore=20) 
+            self.storage = (dict(lumber=20, brick=20, wool=20, grain=20, ore=20)
                 if parent.debug else dict(lumber=0, brick=0, wool=0, grain=0, ore=0))
             self.figures = dict(village=5, city=4, road=15, ship=15)
             self.storage_queue = dict()
@@ -112,7 +111,7 @@ class Siedler:
             if structure == 'move_ship':
                 return True
 
-            if self.figures[structure] == 0: 
+            if self.figures[structure] == 0:
                 return False
 
             if structure == 'road':
@@ -128,12 +127,11 @@ class Siedler:
 
             if not ok: return False
             self.figures[structure] -= 1
-            if structure == 'city': 
+            if structure == 'city':
                 self.figures['village'] += 1
             return True
 
     # end of class Player
-
 
     def is_crossing(self, x, y):
         return (x % 5) % 2 == 1
@@ -179,11 +177,10 @@ class Siedler:
             elif i==3: a = [(-1,0), (1,0), (-3,-1)]
             return self.adj_filter([(x+m,y+n) for m,n in a], True)
         else:
-            if not same_type: 
+            if not same_type:
                 return self.adj_filter([(x+3,y+1) if i==0 else (x-1,y), (x+2,y) if i==4 else (x+1,y)], True)
             u = set(self.edge_adj_edges(x,y))
             return list(set().union(*[self.edge_adj_edges(x2,y2) for x2,y2 in u]) - {(x,y)})
-
 
     # check out where i can build what
     def calc_build_options(self, todo):
@@ -214,7 +211,6 @@ class Siedler:
         if self.pirate is not None:
             for x,y in self.hex_adj_edges(self.pirate[0], self.pirate[1]):
                 self.build_options[y][x] = list(set(self.build_options[y][x])-{'move_ship','ship'})
-
 
     # edge coord -> list of possible structures
     def can_build(self, x, y, initial_phase=False):
@@ -278,7 +274,6 @@ class Siedler:
 
         return []
 
-
     def setup_board(self, scenario):
         self.base_game = scenario['base_game']
         self.board = scenario['board']
@@ -340,9 +335,9 @@ class Siedler:
                     self.hidden_hexes[(x,y)] = self.board[y][x]
                     self.board[y][x] = { 'terrain': 'hidden', 'init': False }
 
-        robber_options = scenario['robber'] if 'robber' in scenario else [(x,y) for y in range(self.height) for x in range(self.width) 
+        robber_options = scenario['robber'] if 'robber' in scenario else [(x,y) for y in range(self.height) for x in range(self.width)
             if self.board[y][x] is not None and self.board[y][x]['terrain'] == 'desert']
-        pirate_options = scenario['pirate'] if 'pirate' in scenario else [(x,y) for y in range(self.height) for x in range(self.width) 
+        pirate_options = scenario['pirate'] if 'pirate' in scenario else [(x,y) for y in range(self.height) for x in range(self.width)
             if self.board[y][x] is not None and self.board[y][x]['terrain'] == 'water']
 
         self.robber = tuple(random.choice(robber_options)) if len(robber_options) > 0 else None
@@ -368,12 +363,12 @@ class Siedler:
 
 
     def describe(self):
-        return { 
-            'width' : self.width, 
-            'height' : self.height, 
-            'board' : self.board, 
-            'edges' : self.edges, 
-            'active' : self.active_player.id, 
+        return {
+            'width' : self.width,
+            'height' : self.height,
+            'board' : self.board,
+            'edges' : self.edges,
+            'active' : self.active_player.id,
             'robber' : self.robber,
             'pirate' : self.pirate,
             'dice' : self.last_dice,
@@ -407,10 +402,10 @@ class Siedler:
 
 
     async def build(self, structure, x, y):
-        self.edges[y][x] = { 
-            'structure' : structure, 
-            'color' : self.active_player.color, 
-            'owner_index' : self.active_idx 
+        self.edges[y][x] = {
+            'structure' : structure,
+            'color' : self.active_player.color,
+            'owner_index' : self.active_idx
         }
 
         if structure == 'move_ship':
@@ -437,7 +432,6 @@ class Siedler:
                             await self.room.broadcast(dialog=text, title='Award', style='gold')
                         self.active_player.colonies.append(self.board[hy][hx]['island'])
 
-
         if structure == 'ship':
             self.active_player.ships_blocked.append((x,y))
 
@@ -445,7 +439,7 @@ class Siedler:
         # quick & dirty: compare to see if the longest road was affected
         award = False
 
-        if structure in ['village','road','ship']:	
+        if structure in ['village','road','ship']:
             laureate = self.players[self.longest_road] if self.longest_road is not None else None
             old_length = max([p.road_max for p in self.players])
             new_length = self.calc_road_length()
@@ -493,7 +487,6 @@ class Siedler:
 
     # main routine
     # called by server.py
-
     async def move(self, user, action, **kwargs):
         # check if all players are present:
         if any(player.id not in self.room.members for player in self.players):
@@ -501,7 +494,7 @@ class Siedler:
             return
 
         # check if move was initiated by active player:
-        if user.id != self.active_player.id: 
+        if user.id != self.active_player.id:
             await user.receive(alert='Dude, it is not your turn.')
             return
 
@@ -563,7 +556,7 @@ class Siedler:
                     clickables=list(range(len(self.players))),
                     description='Pick a player to trade with.'))
 
-            else: 
+            else:
                 raise GameError('You can build, trade, or finish your round.')
                 return
 
@@ -572,7 +565,6 @@ class Siedler:
             self.queue.append(todo) # sth went wrong. try again.
 
         await self.prompt()
-
 
     async def prompt(self):
         if self.active_player.vp >= self.vp_limit: # victory!
@@ -588,7 +580,7 @@ class Siedler:
             self.queue.append(dict(description='It is your turn.'))
 
         todo = strip_func(self.queue[-1])
-        if 'player' in todo: 
+        if 'player' in todo:
             self.active_idx = todo['player']
             self.active_player = self.players[self.active_idx]
 
@@ -599,7 +591,6 @@ class Siedler:
         self.calc_build_options(todo)
         await self.active_player.user.receive(at='game', do='cursor', clickables=self.build_options)
         await self.active_player.user.receive(at='game', do='await', **todo)
-
 
     async def dice(self, args):
         self.initial_phase = False
@@ -612,7 +603,7 @@ class Siedler:
             for idx,player in enumerate(self.players):
                 if player.storage_size() > 7:
                     lose = player.storage_size() // 2
-                    self.queue.append(dict(player=idx, func=self.robber_loot, expected='exchange', 
+                    self.queue.append(dict(player=idx, func=self.robber_loot, expected='exchange',
                         description=f'Robber is looting, you lose {lose} resources.'))
 
         await self.room.broadcast(at='game', do='dice', result=[a, b])
@@ -636,7 +627,6 @@ class Siedler:
         self.active_player.cards_blocked = []
         self.active_player.ships_blocked = []
         self.active_player.ship_moved = False
-
 
     async def trade(self, args, **kwargs):
         def neg(res): return { k:(-v) for k,v in res.items() }
@@ -688,7 +678,6 @@ class Siedler:
                 self.queue.append(dict(player=args['opponent'], func=self.trade, expected='exchange', description=f'Make a counteroffer to {self.active_player.name}.',
                     setup=neg(kwargs['resources']), opponent=self.active_idx ))
 
-
     async def free_build(self, args, x, y, structure):
         expected = args['what']
 
@@ -708,7 +697,6 @@ class Siedler:
 
         self.active_player.figures[structure] -= 1 # no testing needed so far
 
-
     async def robber_loot(self, args, resources):
         lose = self.active_player.storage_size() // 2
 
@@ -718,7 +706,6 @@ class Siedler:
             raise GameError(f"You lose {lose} resources, not {-sum(resources.values())}.")
 
         await self.active_player.store(**resources, hidden=True)
-
 
     async def robber_place(self, args, x, y):
         if not self.on_board(x,y) or self.board[y][x] is None or self.board[y][x]['terrain'] == 'hidden' or self.base_game and self.board[y][x]['terrain'] == 'water':
@@ -742,7 +729,6 @@ class Siedler:
             self.queue.append(dict(func=self.robber_steal, expected='point', clickables=list(adj_players),
                 description=f'Select player to rob.'))
 
-
     async def robber_steal(self, args, player):
         if player not in args['clickables']:
             raise GameError('Attempted to be naughty!')
@@ -761,18 +747,15 @@ class Siedler:
                 await self.active_player.store(**{key : 1}, hidden=True)
                 return
 
-
     def pick_resources(self, player_idx, amount, prompt):
         if player_idx != self.active_idx:
             self.queue.append(dict(player=self.active_idx, description='It is your turn.'))
         self.queue.append(dict(player=player_idx, func=self.pick_resources_verify, expected='exchange', description=prompt, amount=amount))
 
-
     async def pick_resources_verify(self, args, resources):
         if min(resources.values()) < 0 or sum(resources.values()) != args['amount']:
             raise GameError(f'Please pick {args["amount"]} resources, thanks.')
         await self.active_player.store(**resources)
-
 
     def setup_queue(self):
         n = len(self.players)
@@ -782,17 +765,15 @@ class Siedler:
         c = a+b
         d = zip(c, (2*n)*[['road','ship'] if not self.base_game else ['road'], ['village']], n*[False, True] + n*[False, False])
         self.queue = [dict(func=self.dice, expected='dice', description='Throw the dice.')]
-        self.queue += [dict(player=player, func=self.free_build, what=options, payout=payout, 
+        self.queue += [dict(player=player, func=self.free_build, what=options, payout=payout,
             expected='build', description=f'Build {" or ".join(options)}.') for player, options, payout in d]
 
-
     # development cards:
-
     async def card_knight(self):
         self.queue.append(dict(player=self.active_idx, func=self.robber_place, expected='robber', description='Move robber or pirate.'))
         self.active_player.knights += 1
         if self.active_player.knights >= 3:
-            if self.largest_army == self.active_idx: 
+            if self.largest_army == self.active_idx:
                 return True
             if self.largest_army is not None:
                 if self.players[self.largest_army].knights >= self.active_player.knights:
@@ -805,16 +786,13 @@ class Siedler:
 
         return True
 
-
     async def card_vp(self):
         await self.active_player.user.receive(alert='You cannot use this card.')
         return False
 
-
     async def card_monopoly(self):
         self.queue.append(dict(func=self.monopoly_steal, description='Select resource', expected='choose'))
         return True
-
 
     async def card_roads(self, **kwargs):
         if 'args' not in kwargs:
@@ -826,7 +804,7 @@ class Siedler:
         options = ['road','ship'] if not self.base_game else ['road']
 
         # check that it is actually possible to build a road or ship
-        if amount > 0 and True in [(True in [self.active_player.figures[structure] > 0 
+        if amount > 0 and True in [(True in [self.active_player.figures[structure] > 0
         and structure in self.build_options[y][x] for y in range(self.edge_dim_y) for x in range(self.edge_dim_x)]) for structure in ['road', 'ship']]:
             self.queue.append(dict(func=self.card_roads, amount=amount, what=options, expected='build', description=f'Build {" or ".join(options)}.'))
         return True
@@ -836,7 +814,6 @@ class Siedler:
         self.pick_resources(self.active_idx, 2, 'Pick 2 resources')
         return True
 
-
     # queue responder:
     async def monopoly_steal(self, args, resource):
         for i,p in enumerate(self.players):
@@ -845,17 +822,16 @@ class Siedler:
             await p.store(**{resource : -amount})
             await self.active_player.store(**{resource : amount})
 
-
     def setup_cards(self):
-        knight = dict(type='knight', title='Knight', 
+        knight = dict(type='knight', title='Knight',
             description='Move robber or pirate. Steal one resource from an owner of an affected structure.', func=self.card_knight)
-        monopoly = dict(type='progress', title='Monopoly', 
+        monopoly = dict(type='progress', title='Monopoly',
             description='Pick a resource. All other players must give you all of their resources of this type.', func=self.card_monopoly)
-        road_building = dict(type='progress', title='Road Building', 
+        road_building = dict(type='progress', title='Road Building',
             description='Build two roads for free.', func=self.card_roads)
-        year_of_plenty = dict(type='progress', title='Year Of Plenty', 
+        year_of_plenty = dict(type='progress', title='Year Of Plenty',
             description='Take any two resources from the bank.', func=self.card_plenty)
-        victory_point = dict(type='victory_point',  
+        victory_point = dict(type='victory_point',
             description='Keep this card. You get one extra victory point.', func=self.card_vp)
 
         self.cards = 14*[knight] + 2*[monopoly] + 2*[road_building] + 2*[year_of_plenty]
@@ -869,7 +845,6 @@ class Siedler:
 
         random.shuffle(self.cards)
 
-
     async def start(self):
         pos = [(0.1, 0.6), (0.1, 0.15), (0.8, 0.15), (0.8, 0.6)]
 
@@ -882,12 +857,10 @@ class Siedler:
 
         await self.prompt()
 
-
     def get_key(self, user):
         for player in self.players:
             if player.user == user:
                 return player.key
-
 
     async def resume(self, user, key):
         for player in self.players:
@@ -911,7 +884,6 @@ class Siedler:
 
         raise GameError('Incorrect link, player already logged in or game does not exist anymore.')
 
-
     # calculate all players road lengths and store them.
     # return the longest road length.
     # v 1.1d: phase-1: dfs find ends, phase-2: dfs lengths from ends. now checking ships and roads.
@@ -919,7 +891,7 @@ class Siedler:
         marked = [[0 for x in range(self.edge_dim_x)] for y in range(self.edge_dim_y)]
         ends = set()
 
-        def is_mine(x,y,idx): 
+        def is_mine(x,y,idx):
             return self.edges[y][x] is not None and self.edges[y][x]['owner_index'] == idx
         def obstacle(x,y,idx): # someone elses town is in the way
             return self.edges[y][x] is not None and self.edges[y][x]['owner_index'] != idx
@@ -937,11 +909,11 @@ class Siedler:
                 else:
                     branches = [ (ex,ey) for ex,ey in self.edge_adj_edges(cx,cy) if is_mine(ex,ey,idx) ]
                     if len(branches) in [1,3] or not is_connected((cx,cy), branches[0], branches[1]):
-                        result |= {(cx,cy,idx)} 
+                        result |= {(cx,cy,idx)}
                     for ex,ey in branches:
                         if marked[ey][ex] == 0:
                             result |= dfs_ends(ex,ey,idx)
-            
+
             return result
 
         def dfs_length(x,y,idx,avoid=None):
@@ -973,7 +945,7 @@ class Siedler:
                     cx,cy = self.edge_adj_edges(ex,ey)[0]
                     ends |= {(cx,cy,idx)} if len(result) == 0 else result
 
-        for cx,cy,idx in ends: 
+        for cx,cy,idx in ends:
             for ex,ey in self.edge_adj_edges(cx,cy):
                 owner = self.players[idx]
                 owner.road_max = max(owner.road_max, dfs_length(ex,ey,idx,(cx,cy)))

@@ -49,7 +49,7 @@ class Model {
         const border = 0;
         const srcFormat = gl.RGBA;
         const srcType = gl.UNSIGNED_BYTE;
-        const pixel = new Uint8Array([200, 200, 200, 255]); // default color 
+        const pixel = new Uint8Array([200, 200, 200, 255]); // default color
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
@@ -110,7 +110,7 @@ class Model {
         this.specular = this.#loadTexture(gl, specular);
         this.shininess = shininess;
 
-        if (!indices || !vertices || !texCoords || !normals) 
+        if (!indices || !vertices || !texCoords || !normals)
             return; // this is going to be a clone
 
         if (vertices.length != normals.length || vertices.length / 3 != texCoords.length / 2) {

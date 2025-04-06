@@ -26,7 +26,7 @@ const makeMovable = (what, callbackNewPos) => {
             $(document).off('pointermove pointerup');
             if (callbackNewPos)
                 callbackNewPos({ x: offs.left + dir.x, y: offs.top + dir.y });
-            
+
             $(this).css('transition', '').css('zIndex', '').on('pointerdown', f);
         });
     };
@@ -79,7 +79,7 @@ const dialog = (title, text, options, onopen, className) => {
     };
 
     if (!title && !text) {
-        $("#dialog button.default").click(); 
+        $("#dialog button.default").click();
         return;
     }
 
@@ -116,10 +116,10 @@ const dialog = (title, text, options, onopen, className) => {
     }
     $(`#dialog button`).first().addClass("default");
 
-    $(document).on('keypress', function (e) { 
-        if (e.key == "Enter") { 
-            e.preventDefault(); 
-            $("#dialog button.default").click(); 
+    $(document).on('keypress', function (e) {
+        if (e.key == "Enter") {
+            e.preventDefault();
+            $("#dialog button.default").click();
         }
     });
 
@@ -133,7 +133,7 @@ const dialog = (title, text, options, onopen, className) => {
 // msg: null hides current message, '' clears it.
 // returns the arguments for the old message.
 const message = (persistant, msg) => {
-    const old = { 
+    const old = {
         persistant: $("#message").data('timeout') ? false : true,
         msg: $("#message").html()
     };
@@ -145,7 +145,7 @@ const message = (persistant, msg) => {
 
     if (msg && msg == old.msg && $("#message").is('.inactive'))
         return old;
-    
+
     const msgTimeout = 3500;
 
     if (!old.persistant) {
@@ -164,4 +164,3 @@ const message = (persistant, msg) => {
 }
 
 const capital = (a) => a.charAt(0).toUpperCase() + a.slice(1).toLowerCase();
-

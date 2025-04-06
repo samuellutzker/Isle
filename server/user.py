@@ -3,7 +3,6 @@ import random
 from tools import GameError
 
 class User:
-
     all = {} # socket -> user
     user_count = 0
 
@@ -65,4 +64,3 @@ class User:
     async def game_action(self, what):
         if self.room.game is not None:
             await self.room.game.move(self, **what)
-            
