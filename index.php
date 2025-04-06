@@ -104,18 +104,17 @@
             const WSS_URL = LOCAL_WS ? `ws://${window.location.hostname}:8080` : `wss://${window.location.hostname}:8765`;
 
             const allImages = <?php echo json_encode(folder_walk('images', 'jpg', 'jpeg', 'png', 'gif')); ?>;
-            const audios = <?php echo json_encode(get_file_roots(folder_walk('sounds', 'mp3'))); ?>;
-            const scenarios = <?php echo json_encode(get_file_roots(folder_walk('scenarios', 'json'))); ?>;
+            const allAudios = <?php echo json_encode(get_file_roots(folder_walk('sounds', 'mp3'))); ?>;
 
-            Siedler.audioPreload(audios);
+            Siedler.audioPreload(allAudios);
             await imgPreload(allImages);
             await Server.connect(WSS_URL);
 
             <?php
                 if (isset($_GET['user'], $_GET['room'], $_GET['key']) && is_proper($_GET['user'], $_GET['room'], $_GET['key']))
-                    echo "main = new Interface(scenarios, '{$_GET['user']}', '{$_GET['room']}', '{$_GET['key']}');\n";
+                    echo "main = new Interface('{$_GET['user']}', '{$_GET['room']}', '{$_GET['key']}');\n";
                 else
-                    echo "main = new Interface(scenarios);\n";
+                    echo "main = new Interface();\n";
             ?>
         };
 

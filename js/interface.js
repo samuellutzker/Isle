@@ -161,8 +161,8 @@ class Interface {
         }
     }
 
-    constructor(scenarios, user, room, key) {
-        this.#scenarios = scenarios;
+    constructor(user, room, key) {
+        this.#scenarios = [];
 
         Server.setHandlers(this.onMessage.bind(this));
 

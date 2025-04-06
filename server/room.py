@@ -86,6 +86,9 @@ class Room:
         # broadcast that i've joined
         await self.broadcast(user.id, at='room', do='add_user', id=user.id, name=user.name, x=user.x, y=user.y, status=user.msg, color=user.color)
 
+        # refresh scenario list
+        await self.update_scenarios()
+
         log(f'User {user.name} entered room {self.name}.')
 
         if self.game is not None:
