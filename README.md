@@ -7,7 +7,7 @@ If you enjoy this kind of game, please consider supporting the official version 
 
 # Use
 
-To host a game server with secure WebSocket, you will need to create a keychain, for example using **Let's Encrypt**. Then you need to put the files `cert.pem`, `chain.pem`, `fullchain.pem` and `privkey.pem` into `server/cert/`. It is advisable to move the `server/` directory to another place outside of the base directory. You can then use your regular web server, which needs to be configured to support PHP, to host the contents of the base directory. Via `python3 server.py` in your `server/` directory you may start the WebSocket game server. You might need to install some dependencies such as the asyncio and websocket libraries.
+To host a game server with secure WebSocket, you will need to create a keychain, for example using **Let's Encrypt**. Then you'll need to put the files `cert.pem`, `chain.pem`, `fullchain.pem` and `privkey.pem` into `server/cert/`. It is advisable to move the `server/` and `scenarios/` directories to another place outside of the base directory. You can then use your regular web server, which needs to be configured to support PHP, to host the contents of the base directory. The game server is started via `python3 server/server.py` from the directory containing `server/` and `scenarios/`. You might need to install some dependencies such as the asyncio and websocket libraries.
 
 If you want to run a LAN game, WSS might not work, in which case you can switch to unsecure WS by changing `local_ws = False` to `True` in `server/server.py` and `const LOCAL_WS = false` to `true` in `index.php`.
 
