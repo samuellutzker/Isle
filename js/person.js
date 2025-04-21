@@ -112,7 +112,8 @@ class Person {
                 break;
 
             case 'chat' :
-                this.$el.find(".bubble").remove().end().append(`<span class='bubble'>${obj.msg}</span>`);
+                this.$el.find(".bubble").remove().end()
+                        .append(`<span class='bubble'>${obj.type ? '['+this.#escape(obj.type)+'] ' : ''} &raquo;${this.#escape(obj.msg)}&laquo;</span>`);
                 break;
 
             case 'move' :
@@ -123,6 +124,10 @@ class Person {
                 this.status(obj.msg);
                 break;
         }
+    }
+
+    #escape(str) {
+        return new Option(str).innerHTML;
     }
 
     #show() {
@@ -181,7 +186,7 @@ class Person {
         if (this.#videoConn !== undefined && this.#videoConn.active)
             this.#videoConn.chat(text);
         else
-            Server.query({ do: 'send', to: this.#id, msg: { at: "user", do: "chat", msg: "<b>[PM]</b> &laquo;" + text + "&raquo;" }});
+            Server.query({ do: 'send', to: this.#id, msg: { at: "user", do: "chat", msg: text, type: "PM" }});
     }
 
     setActive() {
@@ -225,7 +230,7 @@ class Person {
 
     #connectVideo() {
         if (this.#videoConn === undefined) {
-            this.#videoConn = new VideoConn(this.#id, this.$el.find(".face"), (msg) => this.update({ do: "chat", msg: "<b>[DM]</b> &laquo;" + msg + "&raquo;" }));
+            this.#videoConn = new VideoConn(this.#id, this.$el.find(".face"), (msg) => this.update({ do: "chat", msg: msg, type: "DM" }));
         }
     }
 }

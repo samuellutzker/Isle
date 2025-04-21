@@ -42,7 +42,7 @@ class Room {
     }
 
     chat(text) {
-        Server.query({ do: 'send', msg: { at: "user", do: "chat", msg: `&raquo;${text}&laquo;` }});
+        Server.query({ do: 'send', msg: { at: "user", do: "chat", msg: text }});
     }
 
     // Handle or delegate message from the server
