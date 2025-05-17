@@ -5,8 +5,6 @@ class Shader {
     program;
     attribs;
     uniforms;
-    vertexSrc;
-    fragSrc;
 
     #loadShader(gl, type, source) {
         const shader = gl.createShader(type);
@@ -15,9 +13,7 @@ class Shader {
         gl.compileShader(shader);
 
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            alert(
-            `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`
-            );
+            alert(`An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`);
             gl.deleteShader(shader);
             return null;
         }
@@ -34,14 +30,8 @@ class Shader {
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
 
-        // If creating the shader program failed, alert
-
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            alert(
-                `Unable to initialize the shader program: ${gl.getthis.shaderLog(
-                program
-                )}`
-            );
+            alert(`Unable to initialize the shader program: ${gl.getProgramInfoLog(program)}`);
             return null;
         }
         return program;
