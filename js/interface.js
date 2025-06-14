@@ -47,7 +47,8 @@ class Interface {
     btnAbout() {
         const html = `<div class='icon hexagon'></div><h1>Thanks for stopping by!</h1>
             <p>This adaptation of the base game and Seafarers extension of Catan by Klaus Teuber was developed by Sam Lutzker in 2023/24, for private, non-commercial use only.</p>
-            <p>To view the rules, or a short overview of building prices click the options below.</p>`;
+            <p>For the source, visit <a href='https://github.com/samuellutzker/Isle' target='_blank' id='github'>https://github.com/samuellutzker/Isle</a></p>
+            <p>To view the rules, or a short overview of building prices, click the options below.</p>`;
 
         dialog("ISLE to go", html, {
             "Close" : null,
@@ -193,4 +194,3 @@ class Interface {
         }
     }
 }
-

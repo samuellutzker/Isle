@@ -10,9 +10,9 @@ class User:
     def find(socket):
         return User.all[socket] if socket in User.all else None
 
-    def __init__(self, socket, user_name):
+    def __init__(self, socket, name):
         if socket not in User.all:
-            self.name = user_name
+            self.name = name
             self.id = User.user_count
             self.socket = socket
             self.x = random.random() * 0.5 + 0.25
@@ -56,6 +56,10 @@ class User:
     async def status(self, msg):
         self.msg = msg
         await self.room.broadcast(self.id, at='user', do='status', id=self.id, msg=self.msg)
+
+    async def rename(self, name):
+        self.name = name
+        await self.room.broadcast(self.id, at='user', do='rename', id=self.id, name=self.name)
 
     async def set_color(self, color):
         self.color = color

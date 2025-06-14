@@ -868,9 +868,9 @@ class Siedler:
                 # set player up
                 player.user = user
                 player.id = user.id
-                player.name = user.name
 
                 # fill user in
+                await user.rename(player.name)
                 await user.set_color(player.color)
                 await user.move(player.pos[0], player.pos[1])
                 await user.receive(at='game', do='load', situation=self.describe())

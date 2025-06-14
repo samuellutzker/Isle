@@ -116,6 +116,12 @@ class Person {
                         .append(`<span class='bubble'>${obj.type ? '['+this.#escape(obj.type)+'] ' : ''} &raquo;${this.#escape(obj.msg)}&laquo;</span>`);
                 break;
 
+            case 'rename' :
+                this.#name = obj.name;
+                this.$el.find(".nametag").html(this.#name).end()
+                        .find(".face, .nametag").attr('data-initial', this.#name.charAt(0));
+                break;
+
             case 'move' :
                 this.move(obj.x, obj.y);
                 break;
@@ -131,7 +137,6 @@ class Person {
     }
 
     #show() {
-        const initial = this.#name.charAt(0);
         this.$el = $("<div class='person'></div>")
             .prop('id', this.#domId)
             .html(`
@@ -143,7 +148,7 @@ class Person {
                     <div class='container'></div>
                 </div>
                 <div class='stuff'></div>`)
-            .find('.face, .nametag').attr('data-initial', initial).end()
+            .find('.face, .nametag').attr('data-initial', this.#name.charAt(0)).end()
             .appendTo("div#main");
 
         this.adjustPos();
@@ -163,7 +168,6 @@ class Person {
 
     #setColor(color) {
         const whiteThreshold = 0.75;
-
         const textColor = (Math.min.apply(null, Scene.nameToRgba(color)) > whiteThreshold) ? "black" : "white";
         this.$el.css('--player-color', color).css("--player-text-color", textColor);
     }
