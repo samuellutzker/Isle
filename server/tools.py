@@ -1,4 +1,8 @@
 import time
+import json
+import inspect
+from uuid import UUID
+
 
 class GameError(Exception):
     def __init__(self, message):
@@ -17,3 +21,48 @@ def strip_func(a):
 # combine (+) contents of two dicts
 def combine(a, b, f=lambda x, y: x + y):
     return { k: f(a.get(k, 0), b.get(k, 0)) for k in set(a) | set(b) }
+
+def is_jsonable(o):
+    try:
+        json.dumps(o)
+        return True
+    except:
+        return False
+
+def jsonify(obj):
+    visit = set()
+    def encode(o):
+        if id(o) in visit:
+            return None
+
+        visit.add(id(o))
+
+        if type(o) == list:
+            out = [ encode(v) for v in o ]
+        elif type(o) == dict:
+            out = { k:encode(v) for k,v in o.items() if type(k) in [str, int, float, bool, None] and not callable(v) }
+        elif type(o) == UUID:
+            return o.hex
+        elif hasattr(o, '__dict__'):
+            out = { k:encode(v) for k,v in vars(o).items() if type(k) in [str, int, float, bool, None] and not callable(v) } | { '__class__': type(o).__name__ }
+        elif is_jsonable(o):
+            out = o
+        else:
+            out = None
+
+        visit.remove(id(o))
+        return out
+
+    return json.dumps(encode(obj))
+
+def unjsonify(json_str):
+    def hook(obj):
+        if type(obj) == dict and '__class__' in obj:
+            cl = globals()[obj.pop('__class__')]
+            args = { k:obj[k] for k in inspect.signature(cl.__init__).parameters if k in obj }
+            out = cl(**args)
+            out.__dict__ |= obj
+        return out
+
+    dec = json.JSONDecoder(object_hook=hook)
+    return dec.decode(json_str)

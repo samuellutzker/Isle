@@ -168,6 +168,7 @@ class Room:
 
     async def quit_game(self):
         if self.game is not None:
+            self.game.save()
             self.game = None
             await self.broadcast(at='room', do='editor' if self.is_editor else 'game', show=False)
             await self.broadcast(dialog='Editor was quit.' if self.is_editor else 'Game was quit.')

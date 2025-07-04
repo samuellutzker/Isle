@@ -3,7 +3,104 @@ import json
 import secrets
 import string
 import random
-from tools import GameError, combine, strip_func
+from tools import GameError, combine, strip_func, jsonify, unjsonify
+
+class Player:
+    def __init__(self, parent, user, idx):
+        self.user = user
+        self.parent = parent
+        self.id = user.id
+        self.idx = idx
+        self.name = user.name
+        self.color = user.color
+        self.storage = (dict(lumber=20, brick=20, wool=20, grain=20, ore=20)
+            if parent.debug else dict(lumber=0, brick=0, wool=0, grain=0, ore=0))
+        self.figures = dict(village=5, city=4, road=15, ship=15)
+        self.storage_queue = dict()
+        self.cards = []
+        self.cards_blocked = []
+        self.ships_blocked = []
+        self.colonies = []
+        self.ship_moved = False
+        self.score = 0
+        self.harbors = []
+        self.knights = 0
+        self.road_max = 0
+        self.vp = 2
+        self.key = self.generate_password(30)
+
+    def generate_password(self, length):
+        options = string.ascii_uppercase + string.ascii_lowercase + string.digits
+        return "".join([secrets.choice(options) for i in range(length)])
+
+    def storage_size(self):
+        return sum(self.storage.values())
+
+    async def store(self, hidden=False, collect=False, **kwargs):
+        result = combine(self.storage, kwargs)
+        if 'gold' in result: del result['gold']
+        if min(result.values()) < 0: return False
+        self.storage = result
+        exchg = { k:v for k,v in kwargs.items() if v != 0 }
+        exchg_hidden = dict(generic=sum(kwargs.values())) # currently no need for separate generic loss and gain
+        resources = combine(self.storage_queue, exchg)
+        resources_hidden = combine(self.storage_queue, exchg_hidden)
+        if collect:
+            self.storage_queue = resources_hidden if hidden and player != self else resources
+        else:
+            if 'gold' in resources:
+                self.parent.pick_resources(self.idx, resources['gold'], f"You have produced gold, pick {resources['gold']} resources.")
+                del resources['gold']
+            self.storage_queue = dict()
+            for player in self.parent.players:
+                r = resources_hidden if hidden and player != self else resources
+                await player.user.receive(at='game', do='exchange', id=self.id, resources=r) # tell everyone
+            await self.get_storage() # tell myself
+
+        return True
+
+    async def get_storage(self):
+        await self.user.receive(at='game', do='storage', resources=self.storage)
+
+    async def get_cards(self):
+        await self.user.receive(at='game', do='cards', cards=strip_func(self.cards))
+
+    async def pay_for(self, structure):
+        if structure == 'card':
+            if len(self.parent.cards) > 0 and await self.store(wool=-1, grain=-1, ore=-1):
+                card = self.parent.cards.pop()
+                if card['type'] == 'victory_point':
+                    self.vp += 1
+                self.cards.append(card)
+                self.cards_blocked.append(len(self.cards)-1)
+                await self.user.room.broadcast(at='game', do='buy_card', id=self.id)
+                return True
+            return False
+
+        if structure == 'move_ship':
+            return True
+
+        if self.figures[structure] == 0:
+            return False
+
+        if structure == 'road':
+            ok = await self.store(lumber=-1, brick=-1)
+        elif structure == 'ship':
+            ok = await self.store(lumber=-1, wool=-1)
+        elif structure == 'village':
+            ok = await self.store(lumber=-1, brick=-1, wool=-1, grain=-1)
+            if ok: self.vp += 1
+        elif structure == 'city':
+            ok = await self.store(grain=-2, ore=-3)
+            if ok: self.vp += 1
+
+        if not ok: return False
+        self.figures[structure] -= 1
+        if structure == 'city':
+            self.figures['village'] += 1
+        return True
+
+# end of class Player
 
 class Siedler:
     def __init__(self, room, scenario_name, debug_auth=None):
@@ -23,7 +120,7 @@ class Siedler:
 
         self.resources = dict(forest='lumber', hills= 'brick', pasture='wool', fields='grain', mountains='ore', river='gold')
         self.room = room
-        self.players = [Siedler.Player(self, user, i) for i,user in enumerate(random.sample(list(room.members.values()), len(room.members)))]
+        self.players = [Player(self, user, i) for i,user in enumerate(random.sample(list(room.members.values()), len(room.members)))]
         self.active_idx = 0
         self.active_player = self.players[self.active_idx]
         self.build_options = None
@@ -35,103 +132,6 @@ class Siedler:
         self.setup_board(scenario)
         self.setup_cards()
         self.setup_queue()
-
-    class Player:
-        def __init__(self, parent, user, idx):
-            self.user = user
-            self.parent = parent
-            self.id = user.id
-            self.idx = idx
-            self.name = user.name
-            self.color = user.color
-            self.storage = (dict(lumber=20, brick=20, wool=20, grain=20, ore=20)
-                if parent.debug else dict(lumber=0, brick=0, wool=0, grain=0, ore=0))
-            self.figures = dict(village=5, city=4, road=15, ship=15)
-            self.storage_queue = dict()
-            self.cards = []
-            self.cards_blocked = []
-            self.ships_blocked = []
-            self.colonies = []
-            self.ship_moved = False
-            self.score = 0
-            self.harbors = []
-            self.knights = 0
-            self.road_max = 0
-            self.vp = 2
-            self.key = self.generate_password(30)
-
-        def generate_password(self, length):
-            options = string.ascii_uppercase + string.ascii_lowercase + string.digits
-            return "".join([secrets.choice(options) for i in range(length)])
-
-        def storage_size(self):
-            return sum(self.storage.values())
-
-        async def store(self, hidden=False, collect=False, **kwargs):
-            result = combine(self.storage, kwargs)
-            if 'gold' in result: del result['gold']
-            if min(result.values()) < 0: return False
-            self.storage = result
-            exchg = { k:v for k,v in kwargs.items() if v != 0 }
-            exchg_hidden = dict(generic=sum(kwargs.values())) # currently no need for separate generic loss and gain
-            resources = combine(self.storage_queue, exchg)
-            resources_hidden = combine(self.storage_queue, exchg_hidden)
-            if collect:
-                self.storage_queue = resources_hidden if hidden and player != self else resources
-            else:
-                if 'gold' in resources:
-                    self.parent.pick_resources(self.idx, resources['gold'], f"You have produced gold, pick {resources['gold']} resources.")
-                    del resources['gold']
-                self.storage_queue = dict()
-                for player in self.parent.players:
-                    r = resources_hidden if hidden and player != self else resources
-                    await player.user.receive(at='game', do='exchange', id=self.id, resources=r) # tell everyone
-                await self.get_storage() # tell myself
-
-            return True
-
-        async def get_storage(self):
-            await self.user.receive(at='game', do='storage', resources=self.storage)
-
-        async def get_cards(self):
-            await self.user.receive(at='game', do='cards', cards=strip_func(self.cards))
-
-        async def pay_for(self, structure):
-            if structure == 'card':
-                if len(self.parent.cards) > 0 and await self.store(wool=-1, grain=-1, ore=-1):
-                    card = self.parent.cards.pop()
-                    if card['type'] == 'victory_point':
-                        self.vp += 1
-                    self.cards.append(card)
-                    self.cards_blocked.append(len(self.cards)-1)
-                    await self.user.room.broadcast(at='game', do='buy_card', id=self.id)
-                    return True
-                return False
-
-            if structure == 'move_ship':
-                return True
-
-            if self.figures[structure] == 0:
-                return False
-
-            if structure == 'road':
-                ok = await self.store(lumber=-1, brick=-1)
-            elif structure == 'ship':
-                ok = await self.store(lumber=-1, wool=-1)
-            elif structure == 'village':
-                ok = await self.store(lumber=-1, brick=-1, wool=-1, grain=-1)
-                if ok: self.vp += 1
-            elif structure == 'city':
-                ok = await self.store(grain=-2, ore=-3)
-                if ok: self.vp += 1
-
-            if not ok: return False
-            self.figures[structure] -= 1
-            if structure == 'city':
-                self.figures['village'] += 1
-            return True
-
-    # end of class Player
 
     def is_crossing(self, x, y):
         return (x % 5) % 2 == 1
@@ -883,6 +883,12 @@ class Siedler:
                 return
 
         raise GameError('Incorrect link, player already logged in or game does not exist anymore.')
+
+    def save(self):
+        path = f"games/{self.room.name.lower()}.json"
+        f = open(path, "w")
+        f.write(jsonify(self))
+        f.close()
 
     # calculate all players road lengths and store them.
     # return the longest road length.
