@@ -29,10 +29,10 @@ def is_jsonable(o):
     except:
         return False
 
-def jsonify(obj):
-    visit = set()
+def jsonify(obj, ignore=[]):
+    visit = set() # to prevent circular references
     def encode(o):
-        if id(o) in visit:
+        if type(o) in ignore or o in ignore or id(o) in visit: 
             return None
 
         visit.add(id(o))
@@ -40,15 +40,11 @@ def jsonify(obj):
         if type(o) == list:
             out = [ encode(v) for v in o ]
         elif type(o) == dict:
-            out = { k:encode(v) for k,v in o.items() if type(k) in [str, int, float, bool, None] and not callable(v) }
-        elif type(o) == UUID:
-            return o.hex
+            out = { k:ev for k,v in o.items() if not callable(v) and (ev := encode(v)) is not None }
         elif hasattr(o, '__dict__'):
-            out = { k:encode(v) for k,v in vars(o).items() if type(k) in [str, int, float, bool, None] and not callable(v) } | { '__class__': type(o).__name__ }
-        elif is_jsonable(o):
-            out = o
+            out = { k:ev for k,v in vars(o).items() if not callable(v) and (ev := encode(v)) is not None } | { '__class__': type(o).__name__ }
         else:
-            out = None
+            out = o
 
         visit.remove(id(o))
         return out

@@ -885,9 +885,10 @@ class Siedler:
         raise GameError('Incorrect link, player already logged in or game does not exist anymore.')
 
     def save(self):
+        from room import User, Room
         path = f"games/{self.room.name.lower()}.json"
         f = open(path, "w")
-        f.write(jsonify(self))
+        f.write(jsonify(self, [User, Room]))
         f.close()
 
     # calculate all players road lengths and store them.
