@@ -1,4 +1,5 @@
 import os
+import os.path
 import json
 import random
 from user import User
@@ -19,10 +20,24 @@ class Room:
         self.members = {} # id -> user
         self.name = room_name
         self.game = None
+        if os.path.isfile(self.my_filename()):
+            try:
+                self.game = Siedler(self)
+                self.game.load(self.my_filename())
+                os.remove(self.my_filename())
+                log(f"Loaded (and deleted) {self.my_filename()}.")
+            except Exception as exc:
+                print("Error:", exc)
+                print("Type:", type(exc).__name__)
+                print("Error file info:", exc.__traceback__.tb_frame)
+                print("Error line#:", exc.__traceback__.tb_lineno)
         self.is_editor = False
         self.colors = ["red", "blue", "green", "ivory"] # ["indianred", "ivory", "coral", "royalblue"]
         random.shuffle(self.colors)
         log(f'Room {room_name} opened.')
+
+    def my_filename(self):
+        return f"games/{self.name.lower()}.json"
 
     # sends message to a room member to(id)
     async def message(self, to, **msg):
@@ -116,10 +131,14 @@ class Room:
         log(f'User {user.name} left room {self.name}.')
 
         if len(self.members) == 0:
-            if self.game is None:
-                self.remove()
-            else:
-                log(f"{'Editor' if self.is_editor else 'Game'} in room {self.name} persistent.")
+            if self.game is not None:
+                if self.is_editor:
+                    log(f"Editor in room {self.name} persistent.")
+                    return
+                else:
+                    self.game.save(self.my_filename())
+                    log(f"Game in room {self.name} saved to {self.my_filename()}.")
+            self.remove()
 
     async def update_scenarios(self):
         scenarios = []
@@ -168,7 +187,6 @@ class Room:
 
     async def quit_game(self):
         if self.game is not None:
-            self.game.save()
             self.game = None
             await self.broadcast(at='room', do='editor' if self.is_editor else 'game', show=False)
             await self.broadcast(dialog='Editor was quit.' if self.is_editor else 'Game was quit.')
