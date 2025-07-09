@@ -51,6 +51,7 @@ async def handler(socket):
             except GameError as e:
                 await error(e)
                 await user.remove()
+                room.store_abandoned_game()
 
         else:
             user = User.find(socket)

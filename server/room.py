@@ -127,9 +127,10 @@ class Room:
 
         self.members.pop(user.id)
         user.room = None
-
+        self.store_abandoned_game()
         log(f'User {user.name} left room {self.name}.')
 
+    def store_abandoned_game(self):
         if len(self.members) == 0:
             if self.game is not None:
                 if self.is_editor:
@@ -137,6 +138,7 @@ class Room:
                     return
                 else:
                     self.game.save(self.my_filename())
+                    self.game = None
                     log(f"Game in room {self.name} saved to {self.my_filename()}.")
             self.remove()
 
@@ -193,5 +195,6 @@ class Room:
             log(('Editor' if self.is_editor else 'Game') + f' was quit in room {self.name}.')
 
     def remove(self):
-        Room.all.pop(self.name)
-        log(f'Room {self.name} removed.')
+        if self.name in Room.all:
+            Room.all.pop(self.name)
+            log(f'Room {self.name} removed.')

@@ -3,7 +3,7 @@ import json
 import secrets
 import string
 import random
-from tools import GameError, combine, jsonify
+from tools import GameError, combine, unjsonify, jsonify
 
 class Player:
     def __init__(self, parent, user, idx):
@@ -889,7 +889,7 @@ class Siedler:
 
     def load(self, path):
         f = open(path, "r")
-        game = json.loads(f.read())
+        game = unjsonify(f.read())
         self.__dict__ |= game
         self.players = []
         for p in game['players']:
