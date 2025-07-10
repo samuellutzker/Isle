@@ -2,6 +2,8 @@ import time
 import json
 import builtins
 
+SPECIAL_KEY = '__obj__'
+
 class GameError(Exception):
     def __init__(self, message):
         self.message = message
@@ -13,8 +15,6 @@ def log(*x):
 # combine (+) contents of two dicts
 def combine(a, b, f=lambda x, y: x + y):
     return { k: f(a.get(k, 0), b.get(k, 0)) for k in set(a) | set(b) }
-
-SPECIAL_KEY = '__obj__'
 
 def unjsonify(json_str):
     is_list = False
@@ -38,7 +38,8 @@ def unjsonify(json_str):
 
 def jsonify(obj, ignore=[]):
     obj_count = 0
-    visit = list() # to prevent circular references
+    visit = list() # delete circular references
+
     def encode(o):
         def avoid(x):
             return callable(x) or type(x) in ignore or x in ignore or id(x) in visit
@@ -56,9 +57,9 @@ def jsonify(obj, ignore=[]):
                     'vtype' : type(v).__name__
                 }}
             return (k, v) if (
-                type(k) == str 
-                and not k.startswith(SPECIAL_KEY) 
-                and type(v) not in [set, tuple] 
+                type(k) == str
+                and not k.startswith(SPECIAL_KEY)
+                and type(v) not in [set, tuple]
                 and (type(v) != str or not v.startswith(SPECIAL_KEY))
             ) else (SPECIAL_KEY + str(obj_count), {
                 'key' : k,
