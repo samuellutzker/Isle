@@ -13,10 +13,10 @@ class Room:
 
     @staticmethod
     def open(room_name):
-        return Room.all[room_name] if room_name in Room.all else Room(room_name)
+        return Room.all[room_name.lower()] if room_name.lower() in Room.all else Room(room_name)
 
     def __init__(self, room_name):
-        Room.all[room_name] = self
+        Room.all[room_name.lower()] = self
         self.members = {} # id -> user
         self.name = room_name
         self.game = None
@@ -92,6 +92,7 @@ class Room:
                     self.game = None
                 else:
                     await user.receive(prompt=e.message, forcible=is_forcible)
+                    self.store_abandoned_game()
                     return
 
         if any(other.name == user.name for other in self.members.values()):
@@ -209,6 +210,6 @@ class Room:
             log(('Editor' if self.is_editor else 'Game') + f' was quit in room {self.name}.')
 
     def remove(self):
-        if self.name in Room.all:
-            Room.all.pop(self.name)
+        if self.name.lower() in Room.all:
+            Room.all.pop(self.name.lower())
             log(f'Room {self.name} removed.')
