@@ -868,7 +868,7 @@ class Siedler:
         for player in self.players:
             if user.name == player.name and key == player.key and player.id not in self.room.members:
                 return True
-        return False   
+        return False
 
     async def resume(self, user, key):
         for player in self.players:
