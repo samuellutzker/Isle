@@ -83,7 +83,7 @@ class Room:
         if self.game is not None and not self.is_editor:
             try:
                 if key is None:
-                    raise GameError('Access code required to join running game in this room.')
+                    raise GameError('Access code required to join running game in the room.')
                 elif not self.game.resumable(user, key):
                     raise GameError('Incorrect credentials, or player is already logged in.')
             except GameError as e:
@@ -95,7 +95,7 @@ class Room:
                     self.store_abandoned_game()
                     return
 
-        if any(other.name == user.name for other in self.members.values()):
+        if any(other.name.lower() == user.name.lower() for other in self.members.values()):
             raise GameError('A user of that name already exists in this room.')
 
         user.room = self
