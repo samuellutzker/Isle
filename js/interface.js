@@ -69,11 +69,13 @@ class Interface {
         };
 
         if (this.#room && this.#room.hasGame()) {
-            const html = `<h1>Going so soon?</h1>
+            const html = !this.#room.isEditor()
+                ? `<h1>Going so soon?</h1>
                 <p>Click pause if you want to continue the game later.</p>
                 <p>You may resume playing with the address in the navigation bar and clipboard.</p>
-                <p>Alternatively, set up a password for joining again:</p>
-                <input type='password' placeholder='Password' id='password' />`;
+                <p>Alternatively, set up a password for joining again later:</p>
+                <input type='password' placeholder='Password' id='password' />`
+                : '<h1>Going so soon?</h1><p>Click pause if you want to keep editing later.</p>';
 
             dialog("Leave game", html, {
                 "Pause" : async () => {
@@ -86,7 +88,8 @@ class Interface {
                     leave();
                 },
                 "Stop" : () => {
-                    dialog("Quit", "Are you sure you want to end this game?", { "Yes" : Siedler.stop, "No" : null }, null, "red");
+                    const html = this.#room.isEditor() ? "Are you sure you want to quit the editor?" : "Are you sure you want to end this game?";
+                    dialog("Quit", html, { "Yes" : Siedler.stop, "No" : null }, null, "red");
                 },
                 "Cancel" : null
             }, null, 'wide');

@@ -9,6 +9,7 @@ class Room {
     #ok;
     #game;      // Holds an instance of Game or Editor
     #key;       // Access key to resume current game
+    #isEditor;
 
     constructor(myName, roomName, key, force) {
         this.#roomName = roomName;
@@ -88,7 +89,8 @@ class Room {
                         this.setLink('');
                     }
                     if (obj.show) {
-                        this.#game = obj.do == 'editor' ? new Editor() : new Siedler(this.#users);
+                        this.#isEditor = obj.do == 'editor';
+                        this.#game = this.#isEditor ? new Editor() : new Siedler(this.#users);
                     }
                     break;
 
@@ -121,6 +123,7 @@ class Room {
     }
 
     isReady() { return this.#ok; }
+    isEditor() { return this.#isEditor; }
     hasGame() { return this.#game != null; }
     getKey() { return this.#key; }
 }
