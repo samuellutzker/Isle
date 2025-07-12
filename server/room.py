@@ -83,9 +83,15 @@ class Room:
         if self.game is not None and key is None and not self.is_editor:
             raise GameError('A game is running in this room.')
 
+        if any(other.name == user.name for other in self.members.values()):
+            raise GameError('A user of that name already exists in this room.')
+
+        # pre-check that it's possible to join a running game
+        if self.game is not None and not self.is_editor and not self.game.resumable(user, key):
+            raise GameError('Incorrect link, player already logged in or game does not exist anymore.')
+
         user.room = self
         user.color = self.colors.pop()
-
         await user.receive(at='room', do='enter', ok=True)
 
         # get all current users of the room
@@ -157,24 +163,25 @@ class Room:
         else:
             raise GameError(f'Error occurred, could not delete {name}.')
 
-    # sends game access key to players
-    async def game_key(self, user=None):
+    # sends game access key to players, or sets a new one
+    async def game_key(self, user=None, new_key=None):
         if user is None:
             for i in self.members:
                 await self.game_key(self.members[i])
         else:
-            key = self.game.get_key(user)
-            await user.receive(at='room', do='game_key', key=key)
+            key = self.game.key(user, new_key)
+            if new_key is None:
+                await user.receive(at='room', do='game_key', key=key)
             log(f'Player {user.name} has key: {key}.')
 
     async def new_game(self, user, scenario, debug_auth=None):
         await self.quit_game()
         self.game = Siedler(self, scenario, debug_auth)
         await self.broadcast(at='room', do='game', show=True)
-        log(f'New game in room {self.name}.')
         await self.game_key()
         await self.game.start()
         self.is_editor = False
+        log(f'New game in room {self.name}.')
 
     async def new_editor(self, user, scenario):
         await self.quit_game()
@@ -182,10 +189,10 @@ class Room:
         if scenario is not None:
             await self.game.load(scenario)
         await self.broadcast(at='room', do='editor', show=True)
-        log(f'New editor in room {self.name}.')
         for i in self.members:
             await self.game.describe_to(self.members[i])
         self.is_editor = True
+        log(f'New editor in room {self.name}.')
 
     async def quit_game(self):
         if self.game is not None:

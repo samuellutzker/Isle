@@ -18,6 +18,7 @@ def combine(a, b, f=lambda x, y: x + y):
 
 def unjsonify(json_str):
     is_list = False
+
     def maketype(t,k):
         return None if t == 'NoneType' else getattr(builtins, t)(k)
 

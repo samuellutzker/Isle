@@ -70,17 +70,24 @@ class Interface {
 
         if (this.#room && this.#room.hasGame()) {
             const html = `<h1>Going so soon?</h1>
-                <p>Click pause if you want to continue the game later.
-                You may resume playing with the address in the navigation bar and clipboard.</p>`;
+                <p>Click pause if you want to continue the game later.</p>
+                <p>You may resume playing with the address in the navigation bar and clipboard.</p>
+                <p>Alternatively, set up a password for joining again:</p>
+                <input type='password' placeholder='Password' id='password' />`;
 
             dialog("Leave game", html, {
-                "Pause" : () => {
+                "Pause" : async () => {
+                    if ($("#password").val()) {
+                        await this.#room.updateKey($("#password").val());
+                    }
                     if (navigator.clipboard) {
                         navigator.clipboard.writeText(window.location.href);
                     }
                     leave();
                 },
-                "Stop" : Siedler.stop,
+                "Stop" : () => {
+                    dialog("Quit", "Are you sure you want to end this game?", { "Yes" : Siedler.stop, "No" : null }, null, "red");
+                },
                 "Cancel" : null
             }, null, 'wide');
         } else {

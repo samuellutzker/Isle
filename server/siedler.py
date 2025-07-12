@@ -568,7 +568,8 @@ class Siedler:
     async def prompt(self):
         if self.active_player.vp >= self.vp_limit: # victory!
             await self.room.broadcast(at='game', do='win', id=self.active_player.id, description=f"{self.active_player.name} won.")
-            await self.room.broadcast(dialog=f'<div class="icon trophy"></div><br />{self.active_player.name} has <b>{self.active_player.vp} VP</b> and wins!', title='Game over', style='gold')
+            text = f'<div class="icon trophy"></div><br />{self.active_player.name} has <b>{self.active_player.vp} VP</b> and wins!'
+            await self.room.broadcast(dialog=text, title='Game over', style='gold')
             for player in self.players:
                 for card in player.cards:
                     await self.room.broadcast(at='game', do='use_card', card=card, id=player.id)
@@ -856,18 +857,25 @@ class Siedler:
 
         await self.prompt()
 
-    def get_key(self, user):
+    def key(self, user, new_key=None):
         for player in self.players:
             if player.user == user:
+                if new_key is not None:
+                    player.key = new_key
                 return player.key
+
+    def resumable(self, user, key):
+        for player in self.players:
+            if user.name == player.name and key == player.key and player.id not in self.room.members:
+                return True
+        return False   
 
     async def resume(self, user, key):
         for player in self.players:
-            if key == player.key and player.id not in self.room.members:
+            if user.name == player.name and key == player.key and player.id not in self.room.members:
                 # set player up
                 player.user = user
                 player.id = user.id
-                await user.rename(player.name)
                 await user.set_color(player.color)
                 await user.move(player.pos[0], player.pos[1])
                 await user.receive(at='game', do='load', situation=self.describe())
@@ -876,10 +884,8 @@ class Siedler:
                 await self.update_player_info()
                 if self.active_player == player:
                     await self.prompt()
-
                 return
-
-        raise GameError('Incorrect link, player already logged in or game does not exist anymore.')
+        raise GameError('Unable to resume game.')
 
     def save(self, path):
         from room import User, Room

@@ -76,7 +76,7 @@ class Room {
 
                 case 'game_key' :
                     this.#key = obj.key;
-                    this.setLink(`?user=${this.#myName}&room=${this.#roomName}&key=${obj.key}`);
+                    this.updateKey(null);
                     break;
 
                 case 'editor' :
@@ -106,12 +106,21 @@ class Room {
         window.history.pushState({}, "", link);
     }
 
-    isReady() { return this.#ok; }
-    hasGame() { return this.#game != null; }
-    getKey() { return this.#key; }
+    // Called when a new game access key was received or set
+    async updateKey(pass) {
+        if (this.#game && pass) {
+            this.#key = await hash(pass);
+            Server.query({ do: "set_key", key: this.#key });
+        }
+        this.setLink(`?user=${this.#myName}&room=${this.#roomName}&key=${this.#key}`);
+    }
 
     videoCalls() {
         for (let id in this.#users)
             this.#users[id].videoCall();
     }
+
+    isReady() { return this.#ok; }
+    hasGame() { return this.#game != null; }
+    getKey() { return this.#key; }
 }

@@ -83,6 +83,9 @@ async def handler(socket):
                 elif act == 'delete_scenario' and 'scenario' in query:
                     await user.room.delete_scenario(query['scenario'])
 
+                elif act == 'set_key':
+                    await user.room.game_key(user, query.get('key'))
+
                 elif act == 'quit_game':
                     await user.room.quit_game()
 

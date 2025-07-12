@@ -57,10 +57,6 @@ class User:
         self.msg = msg
         await self.room.broadcast(self.id, at='user', do='status', id=self.id, msg=self.msg)
 
-    async def rename(self, name):
-        self.name = name
-        await self.room.broadcast(self.id, at='user', do='rename', id=self.id, name=self.name)
-
     async def set_color(self, color):
         self.color = color
         await self.room.broadcast(self.id, at='user', do='color', id=self.id, color=color)
