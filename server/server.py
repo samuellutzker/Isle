@@ -40,13 +40,14 @@ async def handler(socket):
             room_name = query['room']
             user_name = query['name']
             key = query.get('key')
+            force = query.get('force')
 
             # new room / open existing room
             room = Room.open(room_name)
             user = User(socket, user_name)
 
             try:
-                await room.enter(user, key)
+                await room.enter(user, key, force)
 
             except GameError as e:
                 await error(e)

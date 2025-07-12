@@ -22,11 +22,11 @@ class Interface {
         }
     }
 
-    #enterRoom(myName, roomName, key) {
+    #enterRoom(myName, roomName, key, force) {
         key = key ?? (this.#room ? this.#room.getKey() : null);
         this.#leaveRoom();
         if (myName && roomName) {
-            this.#room = new Room(myName, roomName, key ?? null);
+            this.#room = new Room(myName, roomName, key ?? null, !!force);
             Server.setHandlers(null, async () => this.#enterRoom(myName, roomName, key));
         }
     }
@@ -164,6 +164,21 @@ class Interface {
             dialog(obj.title ?? "ISLE", obj.dialog, options, null, obj.style ?? null);
         } else if (obj.scenarios) {
             this.#scenarios = obj.scenarios;
+        } else if (obj.prompt) {
+            let html = `<h1>Game is running</h1>
+            <p>${obj.prompt}</p><p>Join it with your password:</p>
+            <input type='password' placeholder='Password' id='password' />`;
+            if (obj.forcible) {
+                html += `<p>The game is currently abandoned, you may also:</p>
+                    <span class='custom-label'>Remove it</span>
+                    <input type="checkbox" id="checkbox_force" />
+                    <label for="checkbox_force"></label>`;
+            }
+
+            dialog("Login", html, {
+                "OK" : async () => this.#enterRoom($("#input_name_user").val(), $("#input_name_room").val(), await hash($("#password").val()), $("#checkbox_force").is(":checked")),
+                "Cancel" : null
+            });
         } else if (this.#room) {
             await this.#room.update(obj);
         }

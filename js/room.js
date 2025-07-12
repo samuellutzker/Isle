@@ -10,12 +10,12 @@ class Room {
     #game;      // Holds an instance of Game or Editor
     #key;       // Access key to resume current game
 
-    constructor(myName, roomName, key) {
+    constructor(myName, roomName, key, force) {
         this.#roomName = roomName;
         this.#myName = myName;
         this.#users = {};
         Person.removeAll();
-        Server.query({ do: "enter", room: roomName, name: myName, key: key });
+        Server.query({ do: "enter", room: roomName, name: myName, key: key, force: force });
     }
 
     enter() {

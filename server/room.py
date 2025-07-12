@@ -68,7 +68,7 @@ class Room:
                 except KeyError as e:
                     pass
 
-    async def enter(self, user, key):
+    async def enter(self, user, key, force):
         def proper(s):
             return len(s) > 0 and len(s) < 16 and s.isalnum() and s.isascii()
 
@@ -80,15 +80,22 @@ class Room:
                 self.remove()
             raise GameError('Choose a proper name, please (only alphanumeric, no whitespace).')
 
-        if self.game is not None and key is None and not self.is_editor:
-            raise GameError('A game is running in this room.')
+        if self.game is not None and not self.is_editor:
+            try:
+                if key is None:
+                    raise GameError('Access code needed to join running game in this room.')
+                elif not self.game.resumable(user, key):
+                    raise GameError('Incorrect credentials or player already logged in.')
+            except GameError as e:
+                is_forcible = len(self.members) == 0
+                if force and is_forcible:
+                    self.game = None
+                else:
+                    await user.receive(prompt=e.message, forcible=is_forcible)
+                    return
 
         if any(other.name == user.name for other in self.members.values()):
             raise GameError('A user of that name already exists in this room.')
-
-        # pre-check that it's possible to join a running game
-        if self.game is not None and not self.is_editor and not self.game.resumable(user, key):
-            raise GameError('Incorrect link, player already logged in or game does not exist anymore.')
 
         user.room = self
         user.color = self.colors.pop()
