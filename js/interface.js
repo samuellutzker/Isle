@@ -166,7 +166,7 @@ class Interface {
             this.#scenarios = obj.scenarios;
         } else if (obj.prompt) {
             let html = `<h1>Game is running</h1>
-            <p>${obj.prompt}</p><p>Join it with your password:</p>
+            <p>${obj.prompt}</p><p>Join game with your password:</p>
             <input type='password' placeholder='Password' id='password' />`;
             if (obj.forcible) {
                 html += `<p>The game is currently abandoned, you may also:</p>

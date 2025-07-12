@@ -20,6 +20,12 @@ class Room:
         self.members = {} # id -> user
         self.name = room_name
         self.game = None
+        self.is_editor = False
+        self.colors = ["red", "blue", "green", "ivory"] # ["indianred", "ivory", "coral", "royalblue"]
+        random.shuffle(self.colors)
+        log(f'Room {room_name} opened.')
+
+        # try to load an existing game
         if os.path.isfile(self.my_filename()):
             try:
                 self.game = Siedler(self)
@@ -27,14 +33,8 @@ class Room:
                 os.remove(self.my_filename())
                 log(f"Loaded (and deleted) {self.my_filename()}.")
             except Exception as exc:
-                print("Error:", exc)
-                print("Type:", type(exc).__name__)
-                print("Error file info:", exc.__traceback__.tb_frame)
-                print("Error line#:", exc.__traceback__.tb_lineno)
-        self.is_editor = False
-        self.colors = ["red", "blue", "green", "ivory"] # ["indianred", "ivory", "coral", "royalblue"]
-        random.shuffle(self.colors)
-        log(f'Room {room_name} opened.')
+                self.game = None
+                log(f'Error loading game: {exc}')
 
     def my_filename(self):
         return f"games/{self.name.lower()}.json"
@@ -83,9 +83,9 @@ class Room:
         if self.game is not None and not self.is_editor:
             try:
                 if key is None:
-                    raise GameError('Access code needed to join running game in this room.')
+                    raise GameError('Access code required to join running game in this room.')
                 elif not self.game.resumable(user, key):
-                    raise GameError('Incorrect credentials or player already logged in.')
+                    raise GameError('Incorrect credentials, or player is already logged in.')
             except GameError as e:
                 is_forcible = len(self.members) == 0
                 if force and is_forcible:
