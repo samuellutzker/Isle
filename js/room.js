@@ -9,13 +9,14 @@ class Room {
     #ok;
     #game;      // Holds an instance of Game or Editor
     #key;       // Access key to resume current game
+    #isEditor;
 
-    constructor(myName, roomName, key) {
+    constructor(myName, roomName, key, force) {
         this.#roomName = roomName;
         this.#myName = myName;
         this.#users = {};
         Person.removeAll();
-        Server.query({ do: "enter", room: roomName, name: myName, key: key });
+        Server.query({ do: "enter", room: roomName, name: myName, key: key, force: force });
     }
 
     enter() {
@@ -76,7 +77,7 @@ class Room {
 
                 case 'game_key' :
                     this.#key = obj.key;
-                    this.setLink(`?user=${this.#myName}&room=${this.#roomName}&key=${obj.key}`);
+                    this.updateKey(null);
                     break;
 
                 case 'editor' :
@@ -88,7 +89,8 @@ class Room {
                         this.setLink('');
                     }
                     if (obj.show) {
-                        this.#game = obj.do == 'editor' ? new Editor() : new Siedler(this.#users);
+                        this.#isEditor = obj.do == 'editor';
+                        this.#game = this.#isEditor ? new Editor() : new Siedler(this.#users);
                     }
                     break;
 
@@ -106,12 +108,22 @@ class Room {
         window.history.pushState({}, "", link);
     }
 
-    isReady() { return this.#ok; }
-    hasGame() { return this.#game != null; }
-    getKey() { return this.#key; }
+    // Called when a new game access key was received or set
+    async updateKey(pass) {
+        if (this.#game && pass) {
+            this.#key = await hash(pass);
+            Server.query({ do: "set_key", key: this.#key });
+        }
+        this.setLink(`?user=${this.#myName}&room=${this.#roomName}&key=${this.#key}`);
+    }
 
     videoCalls() {
         for (let id in this.#users)
             this.#users[id].videoCall();
     }
+
+    isReady() { return this.#ok; }
+    isEditor() { return this.#isEditor; }
+    hasGame() { return this.#game != null; }
+    getKey() { return this.#key; }
 }

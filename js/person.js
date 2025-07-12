@@ -116,12 +116,6 @@ class Person {
                         .append(`<span class='bubble'>${obj.type ? '['+this.#escape(obj.type)+'] ' : ''} &raquo;${this.#escape(obj.msg)}&laquo;</span>`);
                 break;
 
-            case 'rename' :
-                this.#name = obj.name;
-                this.$el.find(".nametag").html(this.#name).end()
-                        .find(".face, .nametag").attr('data-initial', this.#name.charAt(0));
-                break;
-
             case 'move' :
                 this.move(obj.x, obj.y);
                 break;

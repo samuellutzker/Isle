@@ -106,9 +106,9 @@ const dialog = (title, text, options, onopen, className) => {
         let func = options[btn];
         let b = document.createElement("button");
         b.innerHTML = btn;
-        b.onclick = (e) => {
+        b.onclick = async (e) => {
             if (typeof func === 'function') {
-                func();
+                await func();
             }
             closeDialog();
         };
@@ -164,3 +164,13 @@ const message = (persistant, msg) => {
 }
 
 const capital = (a) => a.charAt(0).toUpperCase() + a.slice(1).toLowerCase();
+
+const hash = async (input) => {
+    const textAsBuffer = new TextEncoder().encode(input);
+    const hashBuffer = await window.crypto.subtle.digest("SHA-256", textAsBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hash = hashArray
+        .map((item) => item.toString(16).padStart(2, "0"))
+        .join("");
+    return hash;
+};
