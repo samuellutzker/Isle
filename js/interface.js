@@ -71,10 +71,10 @@ class Interface {
         if (this.#room && this.#room.hasGame()) {
             const html = !this.#room.isEditor()
                 ? `<h1>Going so soon?</h1>
-                <p>Click pause if you want to continue the game later.</p>
-                <p>You may resume playing with the address in the navigation bar and clipboard.</p>
-                <p>Alternatively, set up a password for joining again later:</p>
-                <input type='password' placeholder='Password' id='password' />`
+                <p>Click pause if you want to continue playing later.</p>
+                <p>You may set up a password for resuming the game:</p>
+                <input type='password' placeholder='Password' id='password' /><hr />
+                <p>Log in via password, or by visiting the address in your navigation bar.</p>`
                 : '<h1>Going so soon?</h1><p>Click pause if you want to keep editing later.</p>';
 
             dialog("Leave game", html, {
@@ -117,7 +117,7 @@ class Interface {
                     });
                 },
                 "Cancel" : null
-            }, () => $("#dlg_load_scenario").on('change', () => $("#dlg_load_scenario").val() == '_new' ? closeDialog() : null));
+            }, () => $("#dlg_load_scenario").on('change', () => $("#dlg_load_scenario").val() == '_new' ? closeDialog() : null), 'wide');
         }
 
         if ($("body").hasClass('playing')) {
@@ -169,10 +169,10 @@ class Interface {
             this.#scenarios = obj.scenarios;
         } else if (obj.prompt) {
             let html = `<h1>Game is running</h1>
-            <p>${obj.prompt}</p><p>Join game with your password:</p>
+            <p>${obj.prompt}</p><p>Join the game with your password:</p>
             <input type='password' placeholder='Password' id='password' />`;
             if (obj.forcible) {
-                html += `<p>The game is currently abandoned, you may also:</p>
+                html += `<hr /><p>This game is currently abandoned, you may also:</p>
                     <span class='custom-label'>Remove it</span>
                     <input type="checkbox" id="checkbox_force" />
                     <label for="checkbox_force"></label>`;
@@ -181,7 +181,7 @@ class Interface {
             dialog("Login", html, {
                 "OK" : async () => this.#enterRoom($("#input_name_user").val(), $("#input_name_room").val(), await hash($("#password").val()), $("#checkbox_force").is(":checked")),
                 "Cancel" : null
-            });
+            }, null, 'wide');
         } else if (this.#room) {
             await this.#room.update(obj);
         }
