@@ -72,9 +72,9 @@ class Interface {
             const html = !this.#room.isEditor()
                 ? `<h1>Going so soon?</h1>
                 <p>Click pause if you want to continue playing later.</p>
-                <p>You may set up a password for resuming the game:</p>
+                <p>You may set up a password for accessing the game:</p>
                 <input type='password' placeholder='Password' id='password' /><hr />
-                <p>Log in via password, or by visiting the address in your navigation bar.</p>`
+                <p>Resume via password, or by visiting the address in your navigation bar.</p>`
                 : '<h1>Going so soon?</h1><p>Click pause if you want to keep editing later.</p>';
 
             dialog("Leave game", html, {
