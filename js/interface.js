@@ -74,7 +74,10 @@ class Interface {
                 <p>Click pause if you want to continue playing later.</p>
                 <p>You may set up a password for accessing the game:</p>
                 <input type='password' placeholder='Password' id='password' /><hr />
-                <p>Resume via password, or by visiting the address in your navigation bar.</p>`
+                <p>Resume via password, or by visiting the address in your navigation bar.</p>
+                <span class='custom-label'>Keep address in clipboard</span>
+                <input type="checkbox" id="checkbox_clipboard" checked="checked" />
+                <label for="checkbox_clipboard"></label>`
                 : '<h1>Going so soon?</h1><p>Click pause if you want to keep editing later.</p>';
 
             dialog("Leave game", html, {
@@ -82,7 +85,7 @@ class Interface {
                     if ($("#password").val()) {
                         await this.#room.updateKey($("#password").val());
                     }
-                    if (navigator.clipboard) {
+                    if ($("#checkbox_clipboard").is(":checked") && navigator.clipboard) {
                         navigator.clipboard.writeText(window.location.href);
                     }
                     leave();
