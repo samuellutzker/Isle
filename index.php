@@ -110,10 +110,15 @@
             await Server.connect(WSS_URL);
 
             <?php
-                if (isset($_GET['user'], $_GET['room'], $_GET['key']) && is_proper($_GET['user'], $_GET['room'], $_GET['key']))
+                $user = $room = '';
+
+                if (isset($_GET['user'], $_GET['room'], $_GET['key']) && is_proper($_GET['user'], $_GET['room'], $_GET['key'])) {
+                    $user = $_GET['user'];
+                    $room = $_GET['room'];
                     echo "main = new Interface('{$_GET['user']}', '{$_GET['room']}', '{$_GET['key']}');\n";
-                else
+                } else {
                     echo "main = new Interface();\n";
+                }
             ?>
         };
 
@@ -131,8 +136,8 @@
                 <div>
                     To play, enter a room:<br />
                     <form id="form_enter">
-                        <input type="text" placeholder="My name" id="input_name_user" /><br />
-                        <input type="text" placeholder="Room name" id="input_name_room" /><br />
+                        <input type="text" placeholder="My name" id="input_name_user" value="<?php echo $user; ?>" /><br />
+                        <input type="text" placeholder="Room name" id="input_name_room" value="<?php echo $room; ?>" /><br />
                         <br />
                         <input type="submit" class="default" value="Enter" />
                     </form>

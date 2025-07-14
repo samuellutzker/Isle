@@ -22,11 +22,11 @@ class Interface {
         }
     }
 
-    #enterRoom(myName, roomName, key) {
+    #enterRoom(myName, roomName, key, force) {
         key = key ?? (this.#room ? this.#room.getKey() : null);
         this.#leaveRoom();
         if (myName && roomName) {
-            this.#room = new Room(myName, roomName, key ?? null);
+            this.#room = new Room(myName, roomName, key ?? null, !!force);
             Server.setHandlers(null, async () => this.#enterRoom(myName, roomName, key));
         }
     }
@@ -69,18 +69,31 @@ class Interface {
         };
 
         if (this.#room && this.#room.hasGame()) {
-            const html = `<h1>Going so soon?</h1>
-                <p>Click pause if you want to continue the game later.
-                You may resume playing with the address in the navigation bar and clipboard.</p>`;
+            const html = this.#room.isEditor()
+                ? '<h1>Going so soon?</h1><p>Click pause if you want to keep editing later.</p>'
+                : `<h1>Going so soon?</h1>
+                <p>Click pause if you want to continue playing later.</p>
+                <p>You may set up a password for accessing the game:</p>
+                <input type='password' placeholder='Password' id='password' /><hr />
+                <p>Resume via password, or by visiting the address in your navigation bar.</p>
+                <span class='custom-label'>Copy link to clipboard</span>
+                <input type="checkbox" id="checkbox_clipboard" checked="checked" />
+                <label for="checkbox_clipboard"></label>`;
 
             dialog("Leave game", html, {
-                "Pause" : () => {
-                    if (navigator.clipboard) {
+                "Pause" : async () => {
+                    if ($("#password").val()) {
+                        await this.#room.updateKey($("#password").val());
+                    }
+                    if ($("#checkbox_clipboard").is(":checked") && navigator.clipboard) {
                         navigator.clipboard.writeText(window.location.href);
                     }
                     leave();
                 },
-                "Stop" : Siedler.stop,
+                "Stop" : () => {
+                    const html = this.#room.isEditor() ? "Are you sure you want to quit the editor?" : "Are you sure you want to end this game?";
+                    dialog("Quit", html, { "Yes" : Siedler.stop, "No" : null }, null, "red");
+                },
                 "Cancel" : null
             }, null, 'wide');
         } else {
@@ -107,7 +120,7 @@ class Interface {
                     });
                 },
                 "Cancel" : null
-            }, () => $("#dlg_load_scenario").on('change', () => $("#dlg_load_scenario").val() == '_new' ? closeDialog() : null));
+            }, () => $("#dlg_load_scenario").on('change', () => $("#dlg_load_scenario").val() == '_new' ? closeDialog() : null), 'wide');
         }
 
         if ($("body").hasClass('playing')) {
@@ -157,6 +170,21 @@ class Interface {
             dialog(obj.title ?? "ISLE", obj.dialog, options, null, obj.style ?? null);
         } else if (obj.scenarios) {
             this.#scenarios = obj.scenarios;
+        } else if (obj.prompt) {
+            let html = `<h1>Game is running</h1>
+            <p>${obj.prompt}</p><p>Join the game with your password:</p>
+            <input type='password' placeholder='Password' id='password' />`;
+            if (obj.forcible) {
+                html += `<hr /><p>This game is currently abandoned, you may also:</p>
+                    <span class='custom-label'>Remove it</span>
+                    <input type="checkbox" id="checkbox_force" />
+                    <label for="checkbox_force"></label>`;
+            }
+
+            dialog("Login", html, {
+                "OK" : async () => this.#enterRoom($("#input_name_user").val(), $("#input_name_room").val(), await hash($("#password").val()), $("#checkbox_force").is(":checked")),
+                "Cancel" : null
+            }, null, 'wide');
         } else if (this.#room) {
             await this.#room.update(obj);
         }

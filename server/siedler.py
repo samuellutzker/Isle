@@ -3,12 +3,114 @@ import json
 import secrets
 import string
 import random
-from tools import GameError, combine, strip_func
+from tools import GameError, combine, unjsonify, jsonify
+
+class Player:
+    def __init__(self, parent, user, idx):
+        self.user = user
+        self.parent = parent
+        self.idx = idx
+        if user is not None:
+            self.id = user.id
+            self.name = user.name
+            self.color = user.color
+        self.storage = (dict(lumber=20, brick=20, wool=20, grain=20, ore=20)
+            if parent.debug else dict(lumber=0, brick=0, wool=0, grain=0, ore=0))
+        self.figures = dict(village=5, city=4, road=15, ship=15)
+        self.storage_queue = dict()
+        self.cards = []
+        self.cards_blocked = []
+        self.ships_blocked = []
+        self.colonies = []
+        self.ship_moved = False
+        self.score = 0
+        self.harbors = []
+        self.knights = 0
+        self.road_max = 0
+        self.vp = 2
+        self.key = self.generate_password(30)
+
+    def generate_password(self, length):
+        options = string.ascii_uppercase + string.ascii_lowercase + string.digits
+        return "".join([secrets.choice(options) for i in range(length)])
+
+    def storage_size(self):
+        return sum(self.storage.values())
+
+    async def store(self, hidden=False, collect=False, **kwargs):
+        result = combine(self.storage, kwargs)
+        if 'gold' in result: del result['gold']
+        if min(result.values()) < 0: return False
+        self.storage = result
+        exchg = { k:v for k,v in kwargs.items() if v != 0 }
+        exchg_hidden = dict(generic=sum(kwargs.values())) # currently no need for separate generic loss and gain
+        resources = combine(self.storage_queue, exchg)
+        resources_hidden = combine(self.storage_queue, exchg_hidden)
+        if collect:
+            self.storage_queue = resources_hidden if hidden and player != self else resources
+        else:
+            if 'gold' in resources:
+                self.parent.pick_resources(self.idx, resources['gold'], f"You have produced gold, pick {resources['gold']} resources.")
+                del resources['gold']
+            self.storage_queue = dict()
+            for player in self.parent.players:
+                r = resources_hidden if hidden and player != self else resources
+                await player.user.receive(at='game', do='exchange', id=self.id, resources=r) # tell everyone
+            await self.get_storage() # tell myself
+
+        return True
+
+    async def get_storage(self):
+        await self.user.receive(at='game', do='storage', resources=self.storage)
+
+    async def get_cards(self):
+        await self.user.receive(at='game', do='cards', cards=self.cards)
+
+    async def pay_for(self, structure):
+        if structure == 'card':
+            if len(self.parent.cards) > 0 and await self.store(wool=-1, grain=-1, ore=-1):
+                card = self.parent.cards.pop()
+                if card['type'] == 'victory_point':
+                    self.vp += 1
+                self.cards.append(card)
+                self.cards_blocked.append(len(self.cards)-1)
+                await self.user.room.broadcast(at='game', do='buy_card', id=self.id)
+                return True
+            return False
+
+        if structure == 'move_ship':
+            return True
+
+        if self.figures[structure] == 0:
+            return False
+
+        if structure == 'road':
+            ok = await self.store(lumber=-1, brick=-1)
+        elif structure == 'ship':
+            ok = await self.store(lumber=-1, wool=-1)
+        elif structure == 'village':
+            ok = await self.store(lumber=-1, brick=-1, wool=-1, grain=-1)
+            if ok: self.vp += 1
+        elif structure == 'city':
+            ok = await self.store(grain=-2, ore=-3)
+            if ok: self.vp += 1
+
+        if not ok: return False
+        self.figures[structure] -= 1
+        if structure == 'city':
+            self.figures['village'] += 1
+        return True
+
 
 class Siedler:
-    def __init__(self, room, scenario_name, debug_auth=None):
+    def __init__(self, room, scenario_name=None, debug_auth=None):
         debug_password = "fl31sch"
         self.debug = debug_auth == debug_password
+        self.room = room
+
+        if scenario_name is None:
+            # Create an empty game shell to use for loading
+            return
 
         if len(room.members) not in [3,4] and not self.debug:
             raise GameError('You need 3 or 4 players to play ISLE.')
@@ -22,8 +124,7 @@ class Siedler:
             raise GameError(e)
 
         self.resources = dict(forest='lumber', hills= 'brick', pasture='wool', fields='grain', mountains='ore', river='gold')
-        self.room = room
-        self.players = [Siedler.Player(self, user, i) for i,user in enumerate(random.sample(list(room.members.values()), len(room.members)))]
+        self.players = [Player(self, user, i) for i,user in enumerate(random.sample(list(room.members.values()), len(room.members)))]
         self.active_idx = 0
         self.active_player = self.players[self.active_idx]
         self.build_options = None
@@ -35,103 +136,6 @@ class Siedler:
         self.setup_board(scenario)
         self.setup_cards()
         self.setup_queue()
-
-    class Player:
-        def __init__(self, parent, user, idx):
-            self.user = user
-            self.parent = parent
-            self.id = user.id
-            self.idx = idx
-            self.name = user.name
-            self.color = user.color
-            self.storage = (dict(lumber=20, brick=20, wool=20, grain=20, ore=20)
-                if parent.debug else dict(lumber=0, brick=0, wool=0, grain=0, ore=0))
-            self.figures = dict(village=5, city=4, road=15, ship=15)
-            self.storage_queue = dict()
-            self.cards = []
-            self.cards_blocked = []
-            self.ships_blocked = []
-            self.colonies = []
-            self.ship_moved = False
-            self.score = 0
-            self.harbors = []
-            self.knights = 0
-            self.road_max = 0
-            self.vp = 2
-            self.key = self.generate_password(30)
-
-        def generate_password(self, length):
-            options = string.ascii_uppercase + string.ascii_lowercase + string.digits
-            return "".join([secrets.choice(options) for i in range(length)])
-
-        def storage_size(self):
-            return sum(self.storage.values())
-
-        async def store(self, hidden=False, collect=False, **kwargs):
-            result = combine(self.storage, kwargs)
-            if 'gold' in result: del result['gold']
-            if min(result.values()) < 0: return False
-            self.storage = result
-            exchg = { k:v for k,v in kwargs.items() if v != 0 }
-            exchg_hidden = dict(generic=sum(kwargs.values())) # currently no need for separate generic loss and gain
-            resources = combine(self.storage_queue, exchg)
-            resources_hidden = combine(self.storage_queue, exchg_hidden)
-            if collect:
-                self.storage_queue = resources_hidden if hidden and player != self else resources
-            else:
-                if 'gold' in resources:
-                    self.parent.pick_resources(self.idx, resources['gold'], f"You have produced gold, pick {resources['gold']} resources.")
-                    del resources['gold']
-                self.storage_queue = dict()
-                for player in self.parent.players:
-                    r = resources_hidden if hidden and player != self else resources
-                    await player.user.receive(at='game', do='exchange', id=self.id, resources=r) # tell everyone
-                await self.get_storage() # tell myself
-
-            return True
-
-        async def get_storage(self):
-            await self.user.receive(at='game', do='storage', resources=self.storage)
-
-        async def get_cards(self):
-            await self.user.receive(at='game', do='cards', cards=strip_func(self.cards))
-
-        async def pay_for(self, structure):
-            if structure == 'card':
-                if len(self.parent.cards) > 0 and await self.store(wool=-1, grain=-1, ore=-1):
-                    card = self.parent.cards.pop()
-                    if card['type'] == 'victory_point':
-                        self.vp += 1
-                    self.cards.append(card)
-                    self.cards_blocked.append(len(self.cards)-1)
-                    await self.user.room.broadcast(at='game', do='buy_card', id=self.id)
-                    return True
-                return False
-
-            if structure == 'move_ship':
-                return True
-
-            if self.figures[structure] == 0:
-                return False
-
-            if structure == 'road':
-                ok = await self.store(lumber=-1, brick=-1)
-            elif structure == 'ship':
-                ok = await self.store(lumber=-1, wool=-1)
-            elif structure == 'village':
-                ok = await self.store(lumber=-1, brick=-1, wool=-1, grain=-1)
-                if ok: self.vp += 1
-            elif structure == 'city':
-                ok = await self.store(grain=-2, ore=-3)
-                if ok: self.vp += 1
-
-            if not ok: return False
-            self.figures[structure] -= 1
-            if structure == 'city':
-                self.figures['village'] += 1
-            return True
-
-    # end of class Player
 
     def is_crossing(self, x, y):
         return (x % 5) % 2 == 1
@@ -361,7 +365,6 @@ class Siedler:
                 options -= {(sx,sy)} | set(self.hex_adj_hexes(sx,sy))
                 options |= { (ox,oy) for ox,oy in set(self.hex_adj_hexes(x,y)) if n(ox,oy) not in [None,6,8] and is_option(ox,oy) }
 
-
     def describe(self):
         return {
             'width' : self.width,
@@ -374,7 +377,6 @@ class Siedler:
             'dice' : self.last_dice,
             'card' : self.card_played
         }
-
 
     def get_info(self, idx):
         player = self.players[idx]
@@ -390,16 +392,13 @@ class Siedler:
             }
         }
 
-
     async def update_index2id(self):
         idx2id = { i:p.id for i,p in enumerate(self.players) }
         await self.room.broadcast(at='game', do='index', idx2id=idx2id)
 
-
     async def update_player_info(self):
         for i,player in enumerate(self.players):
             await self.room.broadcast(at='game', do='info', id=player.id, info=self.get_info(i))
-
 
     async def build(self, structure, x, y):
         self.edges[y][x] = {
@@ -412,7 +411,7 @@ class Siedler:
             self.active_player.ship_moved = True
             self.edges[y][x] = None
             self.active_player.figures['ship'] += 1
-            self.queue.append(dict(func=self.free_build, what=['ship'], expected='build', description=f'Place ship.'))
+            self.queue.append(dict(func='free_build', what=['ship'], expected='build', description=f'Place ship.'))
             await self.room.broadcast(at='game', do='remove', what='ship', x=x, y=y)
             return
 
@@ -510,7 +509,7 @@ class Siedler:
 
             # is something on our to-do list?
             if 'func' in todo:
-                await todo['func'](**(kwargs | { 'args' : todo }))
+                await getattr(self, todo['func'])(**(kwargs | { 'args' : todo }))
 
             # nothing on to-do list, regular move:
             elif action == 'build':
@@ -526,7 +525,7 @@ class Siedler:
             elif action == 'finish':
                 self.card_played = None
                 next_player = (self.active_idx + 1) % len(self.players)
-                self.queue.append(dict(player=next_player, func=self.dice, expected='dice', description='Throw the dice.'))
+                self.queue.append(dict(player=next_player, func='dice', expected='dice', description='Throw the dice.'))
 
             elif action == 'card':
                 if 'use' in kwargs:
@@ -537,9 +536,9 @@ class Siedler:
                         await user.receive(alert='You must wait until your next turn to use this card.')
                     else:
                         cards = self.active_player.cards
-                        if await cards[i]['func']():
-                            await self.room.broadcast(at='game', do='use_card', card=strip_func(cards[i]), id=self.active_player.id)
-                            self.card_played = strip_func(cards[i])
+                        if await getattr(self, cards[i]['func'])():
+                            await self.room.broadcast(at='game', do='use_card', card=cards[i], id=self.active_player.id)
+                            self.card_played = cards[i]
                             cards[i] = cards[-1]
                             cards.pop()
                             if len(cards) in self.active_player.cards_blocked:
@@ -552,7 +551,7 @@ class Siedler:
                         await user.receive(alert='Insufficient funds.')
 
             elif action == 'trade':
-                self.queue.append(dict(func=self.trade, expected='point', player=self.active_idx,
+                self.queue.append(dict(func='trade', expected='point', player=self.active_idx,
                     clickables=list(range(len(self.players))),
                     description='Pick a player to trade with.'))
 
@@ -569,17 +568,18 @@ class Siedler:
     async def prompt(self):
         if self.active_player.vp >= self.vp_limit: # victory!
             await self.room.broadcast(at='game', do='win', id=self.active_player.id, description=f"{self.active_player.name} won.")
-            await self.room.broadcast(dialog=f'<div class="icon trophy"></div><br />{self.active_player.name} has <b>{self.active_player.vp} VP</b> and wins!', title='Game over', style='gold')
+            text = f'<div class="icon trophy"></div><br />{self.active_player.name} has <b>{self.active_player.vp} VP</b> and wins!'
+            await self.room.broadcast(dialog=text, title='Game over', style='gold')
             for player in self.players:
                 for card in player.cards:
-                    await self.room.broadcast(at='game', do='use_card', card=strip_func(card), id=player.id)
+                    await self.room.broadcast(at='game', do='use_card', card=card, id=player.id)
             self.queue.clear()
             return
 
         if len(self.queue) == 0:
             self.queue.append(dict(description='It is your turn.'))
 
-        todo = strip_func(self.queue[-1])
+        todo = self.queue[-1]
         if 'player' in todo:
             self.active_idx = todo['player']
             self.active_player = self.players[self.active_idx]
@@ -599,11 +599,11 @@ class Siedler:
 
         if a + b == 7 and not self.debug:
             # robber strikes
-            self.queue.append(dict(player=self.active_idx, func=self.robber_place, expected='robber', description='Move robber or pirate.'))
+            self.queue.append(dict(player=self.active_idx, func='robber_place', expected='robber', description='Move robber or pirate.'))
             for idx,player in enumerate(self.players):
                 if player.storage_size() > 7:
                     lose = player.storage_size() // 2
-                    self.queue.append(dict(player=idx, func=self.robber_loot, expected='exchange',
+                    self.queue.append(dict(player=idx, func='robber_loot', expected='exchange',
                         description=f'Robber is looting, you lose {lose} resources.'))
 
         await self.room.broadcast(at='game', do='dice', result=[a, b])
@@ -636,7 +636,7 @@ class Siedler:
             opponent = kwargs['player']
             description = 'Harbor trade.' if opponent == self.active_idx else f'Make an offer to {self.players[opponent].name}.'
             self.queue.append(dict(player=self.active_idx, description='It is your turn.'))
-            self.queue.append(dict(func=self.trade, expected='exchange', description=description, setup=empty, opponent=opponent))
+            self.queue.append(dict(func='trade', expected='exchange', description=description, setup=empty, opponent=opponent))
         else:
             opponent = self.players[args['opponent']]
             offer = args['setup']
@@ -675,7 +675,7 @@ class Siedler:
                 self.queue[-1]['description'] = 'Trade completed.'
             else:
                 # propose different counteroffer
-                self.queue.append(dict(player=args['opponent'], func=self.trade, expected='exchange', description=f'Make a counteroffer to {self.active_player.name}.',
+                self.queue.append(dict(player=args['opponent'], func='trade', expected='exchange', description=f'Make a counteroffer to {self.active_player.name}.',
                     setup=neg(kwargs['resources']), opponent=self.active_idx ))
 
     async def free_build(self, args, x, y, structure):
@@ -726,7 +726,7 @@ class Siedler:
             await self.room.broadcast(at='game', do='robber', x=x, y=y)
 
         if len(adj_players) > 0:
-            self.queue.append(dict(func=self.robber_steal, expected='point', clickables=list(adj_players),
+            self.queue.append(dict(func='robber_steal', expected='point', clickables=list(adj_players),
                 description=f'Select player to rob.'))
 
     async def robber_steal(self, args, player):
@@ -750,7 +750,7 @@ class Siedler:
     def pick_resources(self, player_idx, amount, prompt):
         if player_idx != self.active_idx:
             self.queue.append(dict(player=self.active_idx, description='It is your turn.'))
-        self.queue.append(dict(player=player_idx, func=self.pick_resources_verify, expected='exchange', description=prompt, amount=amount))
+        self.queue.append(dict(player=player_idx, func='pick_resources_verify', expected='exchange', description=prompt, amount=amount))
 
     async def pick_resources_verify(self, args, resources):
         if min(resources.values()) < 0 or sum(resources.values()) != args['amount']:
@@ -764,13 +764,13 @@ class Siedler:
         b.reverse()
         c = a+b
         d = zip(c, (2*n)*[['road','ship'] if not self.base_game else ['road'], ['village']], n*[False, True] + n*[False, False])
-        self.queue = [dict(func=self.dice, expected='dice', description='Throw the dice.')]
-        self.queue += [dict(player=player, func=self.free_build, what=options, payout=payout,
+        self.queue = [dict(func='dice', expected='dice', description='Throw the dice.')]
+        self.queue += [dict(player=player, func='free_build', what=options, payout=payout,
             expected='build', description=f'Build {" or ".join(options)}.') for player, options, payout in d]
 
     # development cards:
     async def card_knight(self):
-        self.queue.append(dict(player=self.active_idx, func=self.robber_place, expected='robber', description='Move robber or pirate.'))
+        self.queue.append(dict(player=self.active_idx, func='robber_place', expected='robber', description='Move robber or pirate.'))
         self.active_player.knights += 1
         if self.active_player.knights >= 3:
             if self.largest_army == self.active_idx:
@@ -791,7 +791,7 @@ class Siedler:
         return False
 
     async def card_monopoly(self):
-        self.queue.append(dict(func=self.monopoly_steal, description='Select resource', expected='choose'))
+        self.queue.append(dict(func='monopoly_steal', description='Select resource', expected='choose'))
         return True
 
     async def card_roads(self, **kwargs):
@@ -806,7 +806,7 @@ class Siedler:
         # check that it is actually possible to build a road or ship
         if amount > 0 and True in [(True in [self.active_player.figures[structure] > 0
         and structure in self.build_options[y][x] for y in range(self.edge_dim_y) for x in range(self.edge_dim_x)]) for structure in ['road', 'ship']]:
-            self.queue.append(dict(func=self.card_roads, amount=amount, what=options, expected='build', description=f'Build {" or ".join(options)}.'))
+            self.queue.append(dict(func='card_roads', amount=amount, what=options, expected='build', description=f'Build {" or ".join(options)}.'))
         return True
 
 
@@ -824,15 +824,15 @@ class Siedler:
 
     def setup_cards(self):
         knight = dict(type='knight', title='Knight',
-            description='Move robber or pirate. Steal one resource from an owner of an affected structure.', func=self.card_knight)
+            description='Move robber or pirate. Steal one resource from an owner of an affected structure.', func='card_knight')
         monopoly = dict(type='progress', title='Monopoly',
-            description='Pick a resource. All other players must give you all of their resources of this type.', func=self.card_monopoly)
+            description='Pick a resource. All other players must give you all of their resources of this type.', func='card_monopoly')
         road_building = dict(type='progress', title='Road Building',
-            description='Build two roads for free.', func=self.card_roads)
+            description='Build two roads for free.', func='card_roads')
         year_of_plenty = dict(type='progress', title='Year Of Plenty',
-            description='Take any two resources from the bank.', func=self.card_plenty)
+            description='Take any two resources from the bank.', func='card_plenty')
         victory_point = dict(type='victory_point',
-            description='Keep this card. You get one extra victory point.', func=self.card_vp)
+            description='Keep this card. You get one extra victory point.', func='card_vp')
 
         self.cards = 14*[knight] + 2*[monopoly] + 2*[road_building] + 2*[year_of_plenty]
 
@@ -857,20 +857,25 @@ class Siedler:
 
         await self.prompt()
 
-    def get_key(self, user):
+    def key(self, user, new_key=None):
         for player in self.players:
             if player.user == user:
+                if new_key is not None:
+                    player.key = new_key
                 return player.key
+
+    def resumable(self, user, key):
+        for player in self.players:
+            if user.name == player.name and key == player.key and player.id not in self.room.members:
+                return True
+        return False
 
     async def resume(self, user, key):
         for player in self.players:
-            if key == player.key and player.id not in self.room.members:
+            if user.name == player.name and key == player.key and player.id not in self.room.members:
                 # set player up
                 player.user = user
                 player.id = user.id
-
-                # fill user in
-                await user.rename(player.name)
                 await user.set_color(player.color)
                 await user.move(player.pos[0], player.pos[1])
                 await user.receive(at='game', do='load', situation=self.describe())
@@ -879,10 +884,26 @@ class Siedler:
                 await self.update_player_info()
                 if self.active_player == player:
                     await self.prompt()
-
                 return
+        raise GameError('Unable to resume game.')
 
-        raise GameError('Incorrect link, player already logged in or game does not exist anymore.')
+    def save(self, path):
+        from room import User, Room
+        f = open(path, "w")
+        f.write(jsonify(self, [User, Room]))
+        f.close()
+
+    def load(self, path):
+        f = open(path, "r")
+        game = unjsonify(f.read())
+        self.__dict__ |= game
+        self.players = []
+        for p in game['players']:
+            player = Player(self, None, p['idx'])
+            player.__dict__ |= p
+            self.players.append(player)
+        self.active_player = self.players[self.active_idx]
+        f.close()
 
     # calculate all players road lengths and store them.
     # return the longest road length.
