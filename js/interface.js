@@ -69,16 +69,16 @@ class Interface {
         };
 
         if (this.#room && this.#room.hasGame()) {
-            const html = !this.#room.isEditor()
-                ? `<h1>Going so soon?</h1>
+            const html = this.#room.isEditor()
+                ? '<h1>Going so soon?</h1><p>Click pause if you want to keep editing later.</p>'
+                : `<h1>Going so soon?</h1>
                 <p>Click pause if you want to continue playing later.</p>
                 <p>You may set up a password for accessing the game:</p>
                 <input type='password' placeholder='Password' id='password' /><hr />
                 <p>Resume via password, or by visiting the address in your navigation bar.</p>
                 <span class='custom-label'>Copy link to clipboard</span>
                 <input type="checkbox" id="checkbox_clipboard" checked="checked" />
-                <label for="checkbox_clipboard"></label>`
-                : '<h1>Going so soon?</h1><p>Click pause if you want to keep editing later.</p>';
+                <label for="checkbox_clipboard"></label>`;
 
             dialog("Leave game", html, {
                 "Pause" : async () => {
