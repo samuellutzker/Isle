@@ -141,8 +141,8 @@ class Room:
 
         self.members.pop(user.id)
         user.room = None
-        self.store_abandoned_game()
         log(f'User {user.name} left room {self.name}.')
+        self.store_abandoned_game()
 
     def store_abandoned_game(self):
         if len(self.members) == 0:
@@ -186,10 +186,10 @@ class Room:
         await self.quit_game()
         self.game = Siedler(self, scenario, debug_auth)
         await self.broadcast(at='room', do='game', show=True)
+        log(f'New game in room {self.name}.')
         await self.game_key()
         await self.game.start()
         self.is_editor = False
-        log(f'New game in room {self.name}.')
 
     async def new_editor(self, user, scenario):
         await self.quit_game()
@@ -197,10 +197,10 @@ class Room:
         if scenario is not None:
             await self.game.load(scenario)
         await self.broadcast(at='room', do='editor', show=True)
+        log(f'New editor in room {self.name}.')
         for i in self.members:
             await self.game.describe_to(self.members[i])
         self.is_editor = True
-        log(f'New editor in room {self.name}.')
 
     async def quit_game(self):
         if self.game is not None:
